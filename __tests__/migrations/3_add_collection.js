@@ -1,10 +1,6 @@
 const migration = {
   async collections () {
-    return {
-      read: [],
-      write: ['user'],
-      exclusive: []
-    }
+    return ['user']
   },
   async beforeUp (db) {
   },

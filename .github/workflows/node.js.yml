@@ -1,0 +1,38 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ARANGO_NAME: arango_migrate_test
+      ARANGO_URL: http://localhost:8529
+      ARANGO_USERNAME: root
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+      - uses: xinova/arangodb-action@v1
+        with:
+          arangodb version: 'latest'
+
+      - uses: actions/checkout@v2
+        name: Use Node.js ${{ matrix.node-version }}
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - uses: c-hive/gha-yarn-cache@v1
+
+      - name: Install
+        run: yarn install
+
+      - name: Test
+        run: yarn test

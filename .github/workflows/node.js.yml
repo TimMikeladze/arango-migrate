@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - uses: c-hive/gha-yarn-cache@v1
+      - uses: c-hive/gha-yarn-cache@v2
 
       - name: Install
         run: yarn install

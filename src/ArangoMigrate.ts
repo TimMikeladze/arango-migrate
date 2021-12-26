@@ -244,9 +244,13 @@ export class ArangoMigrate {
 
       const transaction = await this.db.beginTransaction(transactionCollections)
 
-      await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
-
       let error
+
+      try {
+        await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
+      } catch (err) {
+        error = new Error(`Running up failed for migration ${i}`)
+      }
 
       try {
         const transactionStatus = await transaction.commit()

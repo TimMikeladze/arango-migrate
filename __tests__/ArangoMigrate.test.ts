@@ -168,6 +168,40 @@ describe('validateMigrationFolderNotEmpty', () => {
   })
 })
 
+describe('hasNewMigrations', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil()
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('returns true if has new migrations', async () => {
+    expect(await tu.context.am.hasNewMigrations()).toBeTruthy()
+  })
+  it('returns false if has no new migrations', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.hasNewMigrations()).toBeFalsy()
+  })
+})
+
+describe('getVersionsFromMigrationPaths', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil()
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('returns versions from migration paths', async () => {
+    expect(tu.context.am.getVersionsFromMigrationPaths()).toEqual(expect.arrayContaining([1, 2, 3]))
+  })
+})
+
 describe('runUpMigrations - all', () => {
   let tu: TestUtil
 
@@ -201,36 +235,21 @@ describe('runUpMigrations - up to version', () => {
   })
 })
 
-describe('hasNewMigrations', () => {
+describe('runUpMigrations - deletes a new collection if created in a migration that failed', () => {
   let tu: TestUtil
 
   beforeAll(async () => {
-    tu = await createTestUtil()
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations_failing'
+    })
     await tu.context.am.initialize()
   })
   afterAll(async () => {
     await tu.destroy()
   })
-  it('returns true if has new migrations', async () => {
-    expect(await tu.context.am.hasNewMigrations()).toBeTruthy()
-  })
-  it('returns false if has no new migrations', async () => {
+  it('if an error is thrown in an up migration and deletes newly created collections', async () => {
     await tu.context.am.runUpMigrations()
-    expect(await tu.context.am.hasNewMigrations()).toBeFalsy()
-  })
-})
-
-describe('getVersionsFromMigrationPaths', () => {
-  let tu: TestUtil
-
-  beforeAll(async () => {
-    tu = await createTestUtil()
-    await tu.context.am.initialize()
-  })
-  afterAll(async () => {
-    await tu.destroy()
-  })
-  it('returns versions from migration paths', async () => {
-    expect(tu.context.am.getVersionsFromMigrationPaths()).toEqual(expect.arrayContaining([1, 2, 3]))
+    expect(await tu.context.db.collection('user').exists()).toBeFalsy()
   })
 })

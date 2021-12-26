@@ -46,11 +46,7 @@ const isString = (s): boolean => {
 
 const MIGRATION_TEMPLATE = `const migration = {
   async collections () {
-    return {
-      read: [],
-      write: [],
-      exclusive: []
-    }
+    return []
   },
   async beforeUp (db) {
   },

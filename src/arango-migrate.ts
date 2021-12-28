@@ -11,6 +11,7 @@ interface CommanderOptions {
     init?: string
     list?: boolean
     typescript?: boolean
+    dryRun?: boolean
 }
 
 (async () => {
@@ -25,6 +26,7 @@ interface CommanderOptions {
     .option('-i --init <name>', 'initialize a new migration file')
     .option('-ts --typescript', 'initialize a migration file which uses typescript')
     .option('-l --list', 'list all applied migrations')
+    .option('-dr --dry-run', 'dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log')
 
   program.parse(process.argv)
 
@@ -39,17 +41,14 @@ interface CommanderOptions {
   am.initialize().then(async () => {
     if (options.list) {
       const history = await am.getMigrationHistory()
-
       if (!history.length) {
         console.log('No migration history')
       } else {
         console.table(history)
       }
-
       process.exit(0)
     } else if (options.init) {
-      am.writeNewMigration(options.init, options.typescript)
-
+      console.log('Migration created at ' + am.writeNewMigration(options.init, options.typescript))
       process.exit(0)
     } else if (options.up) {
       am.validateMigrationFolderNotEmpty()
@@ -59,12 +58,13 @@ interface CommanderOptions {
 
       const to = Number(single ? options.single : options.to)
 
-      if (!await am.hasNewMigrations()) {
+      if (!await am.hasNewMigrations() && !options.dryRun) {
         console.log('No new migrations to run')
         process.exit(0)
       }
-
-      await am.runUpMigrations(to)
+      await am.runUpMigrations(to, options.dryRun)
+      console.log('Migrations applied')
+      process.exit(0)
     } else if (options.down) {
       am.validateMigrationFolderNotEmpty()
       am.validateMigrationVersions()

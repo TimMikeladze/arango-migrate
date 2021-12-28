@@ -320,3 +320,62 @@ describe('runUpMigrations - runs all lifecycle functions', () => {
     expect(migration.afterUp).toHaveBeenCalledWith(expect.any(Database), 2)
   })
 })
+
+describe('runUpMigrations - dry run', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('for a dry run does not commit transaction to the database or write to the migration history', async () => {
+    const migrationOne: Migration = {
+      async collections () {
+        return ['todo']
+      },
+      beforeUp: jest.fn(async () => 1),
+      up: jest.fn(async (db, step, data) => {
+        await step(() => db.collection('todo').save({
+          _key: '1',
+          title: 'Buy milk',
+          completed: false
+        }))
+        return data + 1
+      }),
+      afterUp: jest.fn()
+    }
+    const migrationTwo: Migration = {
+      async collections () {
+        return ['todo']
+      },
+      beforeUp: jest.fn(async () => 1),
+      up: jest.fn(async (db, step, data) => {
+        await step(() => db.collection('todo').save({
+          _key: '2',
+          title: 'Buy food',
+          completed: false
+        }))
+        return data + 1
+      }),
+      afterUp: jest.fn()
+    }
+    tu.context.am.getMigrationFromVersion = (version) => version === 1 ? migrationOne : migrationTwo
+
+    await tu.context.am.runUpMigrations(2, true)
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(0)
+
+    expect(migrationOne.beforeUp).toHaveBeenCalled()
+    expect(migrationOne.up).toHaveBeenCalledWith(expect.any(Database), expect.any(Function), 1)
+    expect(migrationOne.afterUp).toHaveBeenCalledWith(expect.any(Database), 2)
+
+    expect(migrationTwo.beforeUp).toHaveBeenCalled()
+    expect(migrationTwo.up).toHaveBeenCalledWith(expect.any(Database), expect.any(Function), 1)
+    expect(migrationTwo.afterUp).toHaveBeenCalledWith(expect.any(Database), 2)
+  })
+})

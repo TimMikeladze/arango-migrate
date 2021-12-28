@@ -224,7 +224,7 @@ export class ArangoMigrate {
     }
   }
 
-  public async runUpMigrations (to?: number) {
+  public async runUpMigrations (to?: number, dryRun?: boolean) {
     const versions = this.getVersionsFromMigrationPaths()
     if (!to) {
       to = versions[versions.length - 1]
@@ -258,17 +258,20 @@ export class ArangoMigrate {
       try {
         upResult = await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
       } catch (err) {
+        console.log(err)
         error = new Error(`Running up failed for migration ${i}`)
       }
 
-      try {
-        const transactionStatus = await transaction.commit()
+      if (!dryRun) {
+        try {
+          const transactionStatus = await transaction.commit()
 
-        if (transactionStatus.status !== 'committed') {
-          error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}`)
+          if (transactionStatus.status !== 'committed') {
+            error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}`)
+          }
+        } catch (err) {
+          error = new Error('Transaction failed')
         }
-      } catch (err) {
-        error = new Error('Transaction failed')
       }
 
       try {
@@ -286,7 +289,9 @@ export class ArangoMigrate {
       }
 
       if (!error) {
-        await this.writeMigrationHistory(name, i)
+        if (!dryRun) {
+          await this.writeMigrationHistory(name, i)
+        }
       }
 
       if (error) {
@@ -352,7 +357,7 @@ export class ArangoMigrate {
     }
   }
 
-  public writeNewMigration (name: string, typescript: boolean) {
+  public writeNewMigration (name: string, typescript: boolean): string {
     name = slugify(name, '_')
     const version = this.migrationPaths.length + 1
 
@@ -360,7 +365,11 @@ export class ArangoMigrate {
       fs.mkdirSync(path.resolve(this.migrationsPath))
     }
 
-    fs.writeFileSync(path.resolve(`${this.migrationsPath}/${version}_${name}${typescript ? '.ts' : '.js'}`), typescript ? MIGRATION_TEMPLATE_TS : MIGRATION_TEMPLATE_JS)
+    const res = path.resolve(`${this.migrationsPath}/${version}_${name}${typescript ? '.ts' : '.js'}`)
+
+    fs.writeFileSync(res, typescript ? MIGRATION_TEMPLATE_TS : MIGRATION_TEMPLATE_JS)
+
+    return res
   }
 
   public async hasNewMigrations (): Promise<boolean> {

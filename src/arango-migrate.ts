@@ -2,7 +2,7 @@ import { Command } from 'commander'
 import * as path from 'path'
 import { ArangoMigrate, DEFAULT_CONFIG_PATH } from './ArangoMigrate'
 
-export interface CommanderOptions {
+interface CommanderOptions {
     up?: boolean
     down?: boolean
     config?: string
@@ -10,6 +10,7 @@ export interface CommanderOptions {
     single?: number
     init?: string
     list?: boolean
+    typescript?: boolean
 }
 
 (async () => {
@@ -22,6 +23,7 @@ export interface CommanderOptions {
     .option('-t, --to <version>', 'run migrations up to and including a specific version')
     .option('-s --single <version>', 'run a single migration')
     .option('-i --init <name>', 'initialize a new migration file')
+    .option('-ts --typescript', 'initialize a migration file which uses typescript')
     .option('-l --list', 'list all applied migrations')
 
   program.parse(process.argv)
@@ -46,7 +48,7 @@ export interface CommanderOptions {
 
       process.exit(0)
     } else if (options.init) {
-      am.writeNewMigration(options.init)
+      am.writeNewMigration(options.init, options.typescript)
 
       process.exit(0)
     } else if (options.up) {

@@ -1,29 +1,32 @@
 import { Config } from 'arangojs/connection'
 import { Database } from 'arangojs/database'
-import * as glob from 'glob'
-import * as path from 'path'
+import glob from 'glob'
+import path from 'path'
 import { aql } from 'arangojs'
 import { CollectionType, CreateCollectionOptions, DocumentCollection, EdgeCollection } from 'arangojs/collection'
-import * as fs from 'fs'
+import fs from 'fs'
+import slugify from 'slugify'
 
 type Collection = DocumentCollection<any> & EdgeCollection<any>
 
-interface CollectionData {
+export interface CollectionOptions {
   collectionName: string
   options?: CreateCollectionOptions & {
     type?: CollectionType.DOCUMENT_COLLECTION;
   }
 }
 
-type Collections = string[] | CollectionData[]
+export type Collections = string[] | CollectionOptions[]
+
+export type StepFunction = (callback) => Promise<any>
 
 export interface Migration {
     description?: string,
     beforeUp?: (db: Database) => Promise<any>
-    up: (db: Database, step: ((callback) => Promise<any>), data?: any) => Promise<any>;
+    up: (db: Database, step: StepFunction, data?: any) => Promise<any>;
     afterUp?: (db: Database, data?: any) => Promise<void>
     beforeDown?: (db: Database) => Promise<any>
-    down?: (db: Database, step: ((callback) => Promise<any>), data?: any) => Promise<any>;
+    down?: (db: Database, step: StepFunction, data?: any) => Promise<any>;
     afterDown?: (db: Database, data?: any) => Promise<any>
     collections(): Promise<Collections>;
 }
@@ -40,31 +43,46 @@ export interface ArangoMigrateOptions {
     dbConfig: Config
     migrationsPath: string
 }
+
 const isString = (s): boolean => {
   return typeof (s) === 'string' || s instanceof String
 }
 
-const MIGRATION_TEMPLATE = `const migration = {
+const MIGRATION_TEMPLATE_JS = `const migration = {
   async collections () {
     return []
   },
-  async up (db, step, data) {
+  async up (db, step) {
   }
 }
-module.exports = migration
-`
+module.exports = migration`
+
+const MIGRATION_TEMPLATE_TS = `import { Collections, Migration, StepFunction } from 'arango-migrate'
+import { Database } from 'arangojs'
+
+const migration: Migration = {
+  async collections (): Promise<Collections> {
+    return []
+  },
+  async up (db: Database, step: StepFunction) {}
+}
+
+export default migration`
 
 export const DEFAULT_CONFIG_PATH = './config.migrate.js'
+export const DEFAULT_MIGRATIONS_PATH = './migrations'
 
 export class ArangoMigrate {
   private readonly options: ArangoMigrateOptions
   private readonly migrationHistoryCollectionName: string = 'migration_history'
   private db: Database
   private readonly migrationPaths: string[]
+  private readonly migrationsPath: string
 
   constructor (options: ArangoMigrateOptions) {
     this.options = options
-    this.migrationPaths = this.loadMigrationPaths(this.options.migrationsPath)
+    this.migrationsPath = this.options.migrationsPath || DEFAULT_MIGRATIONS_PATH
+    this.migrationPaths = this.loadMigrationPaths(this.migrationsPath)
   }
 
   public static validateConfigPath (configPath: string = DEFAULT_CONFIG_PATH) {
@@ -187,7 +205,7 @@ export class ArangoMigrate {
         ? {
             collectionName: collectionData
           }
-        : collectionData) as CollectionData
+        : collectionData) as CollectionOptions
       allCollectionNames.add(data.collectionName)
       let collection
       try {
@@ -334,10 +352,15 @@ export class ArangoMigrate {
     }
   }
 
-  public writeNewMigration (name: string) {
+  public writeNewMigration (name: string, typescript: boolean) {
+    name = slugify(name, '_')
     const version = this.migrationPaths.length + 1
 
-    fs.writeFileSync(path.resolve(this.options.migrationsPath + `/${version}_${name}.js`), MIGRATION_TEMPLATE)
+    if (!fs.existsSync(path.resolve(this.migrationsPath))) {
+      fs.mkdirSync(path.resolve(this.migrationsPath))
+    }
+
+    fs.writeFileSync(path.resolve(`${this.migrationsPath}/${version}_${name}${typescript ? '.ts' : '.js'}`), typescript ? MIGRATION_TEMPLATE_TS : MIGRATION_TEMPLATE_JS)
   }
 
   public async hasNewMigrations (): Promise<boolean> {

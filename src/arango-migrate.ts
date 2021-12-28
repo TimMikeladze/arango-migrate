@@ -24,7 +24,7 @@ interface CommanderOptions {
     .option('-t, --to <version>', 'run migrations up to and including a specific version')
     .option('-s --single <version>', 'run a single migration')
     .option('-i --init <name>', 'initialize a new migration file')
-    .option('-ts --typescript', 'initialize a migration file which uses typescript')
+    // .option('-ts --typescript', 'initialize a migration file which uses typescript')
     .option('-l --list', 'list all applied migrations')
     .option('-dr --dry-run', 'dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log')
 

@@ -114,11 +114,11 @@ export class ArangoMigrate {
   public async initialize (): Promise<void> {
     const name = this.options.dbConfig.databaseName
 
-    this.db = new Database(this.options.dbConfig)
-
     try {
+      this.db = new Database({ ...this.options.dbConfig, databaseName: undefined })
       this.db = await this.db.createDatabase(name)
     } catch (err) {
+      this.db = new Database(this.options.dbConfig)
       this.db = this.db.database(name)
     }
   }

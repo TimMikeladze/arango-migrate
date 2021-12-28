@@ -109,10 +109,17 @@ describe('writeNewMigration', () => {
   afterAll(async () => {
     await tu.destroy()
   })
-  it('writes a new migration file', async () => {
+  it('writes a new javascript migration file', async () => {
     const name = Date.now().toString()
     const filePath = path.resolve(`${defaultConfig.migrationsPath}/${tu.context.am.getMigrationPaths().length + 1}_${name}.js`)
-    tu.context.am.writeNewMigration(name)
+    tu.context.am.writeNewMigration(name, false)
+    expect(fs.existsSync(filePath)).toBeTruthy()
+    fs.unlinkSync(filePath)
+  })
+  it('writes a new typescript migration file', async () => {
+    const name = Date.now().toString()
+    const filePath = path.resolve(`${defaultConfig.migrationsPath}/${tu.context.am.getMigrationPaths().length + 1}_${name}.ts`)
+    tu.context.am.writeNewMigration(name, true)
     expect(fs.existsSync(filePath)).toBeTruthy()
     fs.unlinkSync(filePath)
   })

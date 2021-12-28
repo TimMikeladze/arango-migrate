@@ -16,14 +16,14 @@ describe('loadMigrationPaths', () => {
 
   it('loads array with migration file paths', () => {
     tu.context.am = new ArangoMigrate(defaultConfig)
-    expect(tu.context.am.migrationPaths.length).toBeGreaterThan(0)
+    expect(tu.context.am.getMigrationPaths().length).toBeGreaterThan(0)
   })
   it('loads empty array if no migration paths found', () => {
     tu.context.am = new ArangoMigrate({
       ...defaultConfig,
       migrationsPath: '../__tests__/migrations_empty'
     })
-    expect(tu.context.am.migrationPaths.length).toEqual(0)
+    expect(tu.context.am.getMigrationPaths().length).toEqual(0)
   })
 })
 
@@ -110,7 +110,7 @@ describe('writeNewMigration', () => {
   })
   it('writes a new migration file', async () => {
     const name = Date.now().toString()
-    const filePath = path.resolve(`${defaultConfig.migrationsPath}/${tu.context.am.migrationPaths.length + 1}_${name}.js`)
+    const filePath = path.resolve(`${defaultConfig.migrationsPath}/${tu.context.am.getMigrationPaths().length + 1}_${name}.js`)
     tu.context.am.writeNewMigration(name)
     expect(fs.existsSync(filePath)).toBeTruthy()
     fs.unlinkSync(filePath)

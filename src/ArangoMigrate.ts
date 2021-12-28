@@ -66,11 +66,11 @@ export class ArangoMigrate {
   private readonly options: ArangoMigrateOptions
   private readonly migrationHistoryCollectionName: string = 'migration_history'
   private db: Database
-  private readonly _migrationPaths: string[]
+  private readonly migrationPaths: string[]
 
   constructor (options: ArangoMigrateOptions) {
     this.options = options
-    this._migrationPaths = this.loadMigrationPaths(this.options.migrationsPath)
+    this.migrationPaths = this.loadMigrationPaths(this.options.migrationsPath)
   }
 
   public static validateConfigPath (configPath: string = DEFAULT_CONFIG_PATH) {
@@ -95,8 +95,8 @@ export class ArangoMigrate {
     }, []).sort((a, b) => a.localeCompare(b))
   }
 
-  get migrationPaths (): string[] {
-    return this._migrationPaths
+  public getMigrationPaths (): string[] {
+    return this.migrationPaths
   }
 
   public async initialize (): Promise<void> {
@@ -112,14 +112,14 @@ export class ArangoMigrate {
   }
 
   public getMigrationPathFromVersion (version: number): string {
-    return this._migrationPaths.find(x => {
+    return this.migrationPaths.find(x => {
       const basename = path.basename(x)
       return version === Number(basename.split('_')[0])
     })
   }
 
   public getMigrationFromVersion (version: number): Migration {
-    return require(this._migrationPaths.find(x => {
+    return require(this.migrationPaths.find(x => {
       const basename = path.basename(x)
 
       return version === Number(basename.split('_')[0]) && fs.existsSync(path.resolve(x))

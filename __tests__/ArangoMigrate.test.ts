@@ -1,7 +1,8 @@
 import { createTestUtil, defaultConfig, TestUtil } from './testUtil'
 import * as path from 'path'
 import * as fs from 'fs'
-import { ArangoMigrate } from '../src/ArangoMigrate'
+import { ArangoMigrate, Migration } from '../src/ArangoMigrate'
+import { Database } from 'arangojs/database'
 
 describe('loadMigrationPaths', () => {
   let tu: TestUtil
@@ -249,7 +250,66 @@ describe('runUpMigrations - deletes a new collection if created in a migration t
     await tu.destroy()
   })
   it('if an error is thrown in an up migration and deletes newly created collections', async () => {
-    await tu.context.am.runUpMigrations()
+    await expect(tu.context.am.runUpMigrations()).rejects.toThrowError()
     expect(await tu.context.db.collection('user').exists()).toBeFalsy()
+  })
+})
+
+describe('runUpMigrations - stops running migrations if a migration fails', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations_transaction_failing'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('stops running migrations after a transaction fails', async () => {
+    await expect(tu.context.am.runUpMigrations()).rejects.toThrowError()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(1)
+  })
+})
+
+describe('runUpMigrations - runs all lifecycle functions', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('calls all up lifecycle functions', async () => {
+    const migration: Migration = {
+      async collections () {
+        return ['todo']
+      },
+      beforeUp: jest.fn(async () => 1),
+      up: jest.fn(async (db, step, data) => {
+        await step(() => db.collection('todo').save({
+          _key: '1',
+          title: 'Buy milk',
+          completed: false
+        }))
+        return data + 1
+      }),
+      afterUp: jest.fn()
+    }
+    tu.context.am.getMigrationFromVersion = () => migration
+
+    await tu.context.am.runUpMigrations(1)
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(1)
+
+    expect(migration.beforeUp).toHaveBeenCalled()
+    expect(migration.up).toHaveBeenCalledWith(expect.any(Database), expect.any(Function), 1)
+    expect(migration.afterUp).toHaveBeenCalledWith(expect.any(Database), 2)
   })
 })

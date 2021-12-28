@@ -19,12 +19,12 @@ type Collections = string[] | CollectionData[]
 
 export interface Migration {
     description?: string,
-    beforeUp?: (db: Database) => Promise<void>
-    beforeDown?: (db: Database) => Promise<void>
-    afterUp?: (db: Database) => Promise<void>
-    up: (db: Database, step: ((callback) => Promise<any>), data?: any) => Promise<void>;
-    down: (db: Database, step: ((callback) => Promise<any>), data?: any) => Promise<void>;
-    afterDown?: (db: Database) => Promise<void>
+    beforeUp?: (db: Database) => Promise<any>
+    up: (db: Database, step: ((callback) => Promise<any>), data?: any) => Promise<any>;
+    afterUp?: (db: Database, data?: any) => Promise<void>
+    beforeDown?: (db: Database) => Promise<any>
+    down?: (db: Database, step: ((callback) => Promise<any>), data?: any) => Promise<any>;
+    afterDown?: (db: Database, data?: any) => Promise<any>
     collections(): Promise<Collections>;
 }
 
@@ -48,13 +48,7 @@ const MIGRATION_TEMPLATE = `const migration = {
   async collections () {
     return []
   },
-  async beforeUp (db) {
-  },
   async up (db, step, data) {
-  },
-  async beforeDown (db) {
-  },
-  async down (db, step, data) {
   }
 }
 module.exports = migration
@@ -241,9 +235,10 @@ export class ArangoMigrate {
       const transaction = await this.db.beginTransaction(transactionCollections)
 
       let error
+      let upResult
 
       try {
-        await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
+        upResult = await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
       } catch (err) {
         error = new Error(`Running up failed for migration ${i}`)
       }
@@ -260,7 +255,7 @@ export class ArangoMigrate {
 
       try {
         if (migration.afterUp) {
-          await migration.afterUp(this.db)
+          await migration.afterUp(this.db, upResult)
         }
       } catch (err) {
         error = new Error('afterUp threw an error ' + err)
@@ -274,6 +269,10 @@ export class ArangoMigrate {
 
       if (!error) {
         await this.writeMigrationHistory(name, i)
+      }
+
+      if (error) {
+        throw error
       }
     }
   }

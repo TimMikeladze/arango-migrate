@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command } from 'commander'
 import * as path from 'path'
 import { ArangoMigrate, DEFAULT_CONFIG_PATH } from './ArangoMigrate'

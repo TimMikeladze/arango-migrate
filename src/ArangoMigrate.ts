@@ -34,9 +34,12 @@ export interface Migration {
 export interface MigrationHistory {
     _key: string;
     _id: string;
+    direction: 'up' | 'down';
+    description?: string;
     version: number;
     name: string;
     createdAt: string
+  counter: number;
 }
 
 export interface ArangoMigrateOptions {
@@ -145,23 +148,6 @@ export class ArangoMigrate {
     } catch {
       collection = this.db.collection(collectionName)
     }
-
-    try {
-      await collection.ensureIndex({
-        unique: true,
-        inBackground: false,
-        type: 'persistent',
-        fields: ['name']
-      })
-
-      await collection.ensureIndex({
-        unique: true,
-        inBackground: false,
-        type: 'persistent',
-        fields: ['version']
-      })
-    } catch (err) {}
-
     return collection
   }
 
@@ -170,7 +156,7 @@ export class ArangoMigrate {
 
     return await (await this.db.query(aql`
       FOR x IN ${collection}
-      SORT x.version ASC
+      SORT x.counter ASC
       RETURN x`)).all()
   }
 
@@ -179,17 +165,22 @@ export class ArangoMigrate {
 
     return await (await this.db.query(aql`
       FOR x IN ${collection}
-      SORT x.version DESC
+      SORT x.counter DESC
       LIMIT 1
       RETURN x`)).next()
   }
 
-  public async writeMigrationHistory (name: string, version: number) {
+  public async writeMigrationHistory (direction: 'up' | 'down', name: string, description: string, version: number) {
     const collection = await this.getMigrationHistoryCollection(this.migrationHistoryCollectionName)
+
+    const latest = await this.getLatestMigration()
 
     await collection.save({
       name,
+      description,
       version,
+      direction,
+      counter: latest ? latest.counter + 1 : 1,
       createdAt: new Date()
     })
   }
@@ -231,7 +222,13 @@ export class ArangoMigrate {
     }
     const latestMigration = await this.getLatestMigration()
 
-    for (let i = (latestMigration?.version ? latestMigration.version + 1 : 1); i <= (to || latestMigration?.version); i++) {
+    let start = 1
+
+    if (latestMigration?.version) {
+      start = latestMigration.direction === 'up' ? latestMigration.version + 1 : latestMigration.version
+    }
+
+    for (let i = start; i <= (to || latestMigration?.version); i++) {
       let migration: Migration
       try {
         migration = this.getMigrationFromVersion(i)
@@ -242,7 +239,7 @@ export class ArangoMigrate {
 
       const name = path.basename(this.getMigrationPathFromVersion(i))
 
-      const collectionNames = await migration.collections()
+      const collectionNames = migration.collections ? await migration.collections() : []
 
       const { transactionCollections, newCollections } = await this.initializeTransactionCollections(collectionNames)
 
@@ -256,11 +253,13 @@ export class ArangoMigrate {
       let error
       let upResult
 
-      try {
-        upResult = await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
-      } catch (err) {
-        console.log(err)
-        error = new Error(`Running up failed for migration ${i}`)
+      if (migration.up) {
+        try {
+          upResult = await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
+        } catch (err) {
+          console.log(err)
+          error = new Error(`Running up failed for migration ${i}`)
+        }
       }
 
       if (!dryRun) {
@@ -291,7 +290,7 @@ export class ArangoMigrate {
 
       if (!error) {
         if (!dryRun) {
-          await this.writeMigrationHistory(name, i)
+          await this.writeMigrationHistory('up', name, migration.description, i)
         }
       }
 
@@ -301,10 +300,88 @@ export class ArangoMigrate {
     }
   }
 
-  public async runDownMigrations (to?: number) {
+  public async runDownMigrations (to?: number, dryRun?: boolean) {
     const latestMigration = await this.getLatestMigration()
 
-    for (let i = (latestMigration?.version || 1); i >= (to || 1); i--) {
+    if (!latestMigration) {
+      throw new Error('No migrations have been applied')
+    }
+
+    if (!to) {
+      to = 1
+    }
+
+    for (let i = latestMigration.version; i >= to; i--) {
+      let migration: Migration
+      try {
+        migration = this.getMigrationFromVersion(i)
+      } catch (err) {
+        console.log(err)
+        return
+      }
+
+      const name = path.basename(this.getMigrationPathFromVersion(i))
+
+      const collectionNames = migration.collections ? await migration.collections() : []
+
+      const { transactionCollections, newCollections } = await this.initializeTransactionCollections(collectionNames)
+
+      let error
+
+      let beforeDownData
+
+      if (migration.beforeDown) {
+        beforeDownData = await migration.beforeDown(this.db)
+      }
+
+      const transaction = await this.db.beginTransaction(transactionCollections)
+
+      let downResult
+
+      if (migration.down) {
+        try {
+          downResult = await migration.down(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeDownData)
+        } catch (err) {
+          console.log(err)
+          error = new Error(`Running up failed for migration ${i}`)
+        }
+      }
+
+      if (!dryRun) {
+        try {
+          const transactionStatus = await transaction.commit()
+
+          if (transactionStatus.status !== 'committed') {
+            error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}`)
+          }
+        } catch (err) {
+          error = new Error('Transaction failed')
+        }
+      }
+
+      try {
+        if (migration.afterDown) {
+          await migration.afterDown(this.db, downResult)
+        }
+      } catch (err) {
+        error = new Error('afterDown threw an error ' + err)
+      }
+
+      if (error) {
+        for (const collection of Array.from(newCollections)) {
+          await collection.drop()
+        }
+      }
+
+      if (!error) {
+        if (!dryRun) {
+          await this.writeMigrationHistory('down', name, migration.description, i)
+        }
+      }
+
+      if (error) {
+        throw error
+      }
     }
   }
 

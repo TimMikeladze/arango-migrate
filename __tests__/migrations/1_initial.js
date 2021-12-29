@@ -1,4 +1,5 @@
 const migration = {
+  description: 'The first migration',
   async collections () {
     return ['todo']
   },

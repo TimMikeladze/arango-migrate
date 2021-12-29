@@ -4,16 +4,14 @@ const migration = {
   },
   async beforeUp (db) {
     await db.collection('todo').ensureIndex({
+      name: 'index_todo_completed',
       type: 'persistent',
       fields: ['completed'],
       inBackground: false
     })
   },
-  async up (db, step, data) {
-  },
-  async beforeDown (db) {
-  },
-  async down (db, step, data) {
+  async afterDown (db) {
+    await db.collection('todo').dropIndex('index_todo_completed')
   }
 }
 module.exports = migration

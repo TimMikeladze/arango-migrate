@@ -2,13 +2,8 @@ const migration = {
   async collections () {
     return ['user']
   },
-  async beforeUp (db) {
-  },
-  async up (db, step, data) {
-  },
-  async beforeDown (db) {
-  },
-  async down (db, step, data) {
+  async afterDown (db, step, data) {
+    await db.collection('user').drop()
   }
 }
 module.exports = migration

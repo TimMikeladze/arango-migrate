@@ -23,10 +23,8 @@ interface CommanderOptions {
     .option('-c, --config <config>', 'path to a js config file. Defaults to ./config.migrate.js')
     .option('-u, --up', 'run up migrations. Defaults to running all unapplied migrations if no --to parameter is provided')
     .option('-d, --down', 'run down migrations')
-    .option('-t, --to <version>', 'run migrations up to and including a specific version')
-    .option('-s --single <version>', 'run a single migration')
+    .option('-t, --to <version>', 'run migrations to and including a specific version')
     .option('-i --init <name>', 'initialize a new migration file')
-    // .option('-ts --typescript', 'initialize a migration file which uses typescript')
     .option('-l --list', 'list all applied migrations')
     .option('-dr --dry-run', 'dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log')
 
@@ -65,22 +63,17 @@ interface CommanderOptions {
         process.exit(0)
       }
       await am.runUpMigrations(to, options.dryRun)
-      console.log('Migrations applied')
+      console.log('Up migrations applied')
       process.exit(0)
     } else if (options.down) {
       am.validateMigrationFolderNotEmpty()
       am.validateMigrationVersions()
 
-      const single = (Number(options.single) >= 0)
+      const to = Number(options.to)
 
-      const to = Number(single ? options.single : options.to)
-
-      if (!to) {
-        console.log('To argument is required')
-        process.exit(0)
-      }
-
-      await am.runDownMigrations(to)
+      await am.runDownMigrations(to, options.dryRun)
+      console.log('Down migrations applied')
+      process.exit(0)
     }
   })
 })()

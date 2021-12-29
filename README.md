@@ -2,30 +2,22 @@
 
 ## Getting Started
 
-> npm install arango-migrate --dev
-
 > yarn add arango-migrate --dev
 
 ## Usage
 
 ```
-Usage: arango-migrate [options]
+Usage: cli [options]
 
 Options:
-  -c, --config <config>  path to a js config file. Defaults to
-                         ./config.migrate.js
-  -u, --up               run up migrations. Defaults to running all unapplied
-                         migrations if no --to parameter is provided
-  -d, --down             run down migrations
-  -t, --to <version>     run migrations up to and including a specific version
-  -s --single <version>  run a single migration
+  -c, --config <config>  path to a js config file. Defaults to ./config.migrate.js
+  -u, --up               run up migrations. Defaults to running all unapplied migrations if no --to parameter is provided
+  -d, --down             run down migrations. --to parameter is required
+  -t, --to <version>     run migrations to and including a specific version
   -i --init <name>       initialize a new migration file
   -l --list              list all applied migrations
-  -dr --dry-run          dry run. Executes migration lifecycle functions but
-                         never commits the transaction to the database or
-                         writes to the migration history log
+  -dr --dry-run          dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log
   -h, --help             display help for command
-
 ```
 
 ### Configuration
@@ -81,6 +73,7 @@ module.exports = migration
 
 ```javascript
 const migration = {
+    // Return an array of collections used in this migration
     async collections () {
         return []
     },
@@ -91,6 +84,14 @@ const migration = {
         return data;
     },
     async afterUp (db, data) {
+    },
+    async beforeDown (db, step) {
+        return data;
+    },
+    async down (db, step, data) {
+        return data;
+    },
+    async afterDown (db, data) {
     }
 }
 module.exports = migration

@@ -223,6 +223,31 @@ describe('runUpMigrations - all', () => {
   it('runs all up migrations', async () => {
     await tu.context.am.runUpMigrations()
     expect(await tu.context.am.getMigrationHistory()).toHaveLength(3)
+    expect((await tu.context.am.getMigrationHistory())[0].description).toEqual('The first migration')
+  })
+})
+
+describe('runDownMigrations - all', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil()
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('runs all down migrations', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(3)
+    await tu.context.am.runDownMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(6)
+    expect((await tu.context.am.getMigrationHistory())[2].direction).toEqual('up')
+    expect((await tu.context.am.getMigrationHistory())[4].direction).toEqual('down')
+  })
+  it('runs all up migrations again', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(9)
   })
 })
 
@@ -301,7 +326,7 @@ describe('runUpMigrations - stops running migrations if a migration fails', () =
   })
 })
 
-describe('runUpMigrations - runs all lifecycle functions', () => {
+describe('runUpMigrations/runDownMigrations - runs all lifecycle functions', () => {
   let tu: TestUtil
 
   beforeAll(async () => {
@@ -328,7 +353,15 @@ describe('runUpMigrations - runs all lifecycle functions', () => {
         }))
         return data + 1
       }),
-      afterUp: jest.fn()
+      afterUp: jest.fn(),
+      beforeDown: jest.fn(async () => 1),
+      down: jest.fn(async (db, step, data) => {
+        await step(() => db.collection('todo').remove({
+          _key: '1'
+        }))
+        return data + 1
+      }),
+      afterDown: jest.fn()
     }
     tu.context.am.getMigrationFromVersion = () => migration
 
@@ -338,6 +371,13 @@ describe('runUpMigrations - runs all lifecycle functions', () => {
     expect(migration.beforeUp).toHaveBeenCalled()
     expect(migration.up).toHaveBeenCalledWith(expect.any(Database), expect.any(Function), 1)
     expect(migration.afterUp).toHaveBeenCalledWith(expect.any(Database), 2)
+
+    await tu.context.am.runDownMigrations(1)
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(2)
+
+    expect(migration.beforeDown).toHaveBeenCalled()
+    expect(migration.down).toHaveBeenCalledWith(expect.any(Database), expect.any(Function), 1)
+    expect(migration.afterDown).toHaveBeenCalledWith(expect.any(Database), 2)
   })
 })
 

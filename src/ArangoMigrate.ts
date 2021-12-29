@@ -229,14 +229,15 @@ export class ArangoMigrate {
     if (!to) {
       to = versions[versions.length - 1]
     }
-
     const latestMigration = await this.getLatestMigration()
-    for (let i = (latestMigration?.version || 1); i <= (to || latestMigration?.version); i++) {
+
+    for (let i = (latestMigration?.version ? latestMigration.version + 1 : 1); i <= (to || latestMigration?.version); i++) {
       let migration: Migration
       try {
         migration = this.getMigrationFromVersion(i)
       } catch (err) {
         console.log(err)
+        return
       }
 
       const name = path.basename(this.getMigrationPathFromVersion(i))

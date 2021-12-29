@@ -226,6 +226,26 @@ describe('runUpMigrations - all', () => {
   })
 })
 
+describe('runUpMigrations - in parts', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil()
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('run first two migrations', async () => {
+    await tu.context.am.runUpMigrations(2)
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(2)
+  })
+  it('run third migration', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(3)
+  })
+})
+
 describe('runUpMigrations - up to version', () => {
   let tu: TestUtil
 

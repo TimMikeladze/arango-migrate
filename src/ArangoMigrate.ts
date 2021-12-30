@@ -38,8 +38,8 @@ export interface MigrationHistory {
     description?: string;
     version: number;
     name: string;
-    createdAt: string
-  counter: number;
+    createdAt: string;
+    counter: number;
 }
 
 export interface ArangoMigrateOptions {

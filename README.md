@@ -1,5 +1,7 @@
 # arango-migrate
 
+Migration tools for ArangoDB.
+
 ## Getting Started
 
 > yarn add arango-migrate --dev
@@ -65,16 +67,22 @@ const migration = {
 module.exports = migration
 ```
 
-### Run up migrations
+### Running up migrations
 
 `arango-migrate -u`
+
+Runs all unapplied migrations.
+
+`arango-migrate -u -t 1`
+
+Runs all unapplied migrations up to and including version 1.
 
 ### Anatomy of a migration
 
 ```javascript
 const migration = {
-    // Return an array of collections used in this migration
     async collections () {
+        // Must return an array of collections used in this migration
         return []
     },
     async beforeUp (db, step) {

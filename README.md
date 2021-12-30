@@ -46,7 +46,7 @@ module.exports = {
 
 ### Initialize a new migration
 
-`arango-migrate -i new-migration-name`
+`yarn arango-migrate -i new-migration-name`
 
 This will create an empty migration file in the `migrations` directory.
 
@@ -58,6 +58,7 @@ const migration = {
         return ['todo'] // all collections used in this migration must be defined here
     },
     async up (db, step) {
+        // Using the `step` function, add a new document to the collection as part of this migration's transaction.
         await step(async () => await db.collection('todo').save({
             _key: '1',
             name: 'Buy milk'
@@ -69,13 +70,36 @@ module.exports = migration
 
 ### Running up migrations
 
-`arango-migrate -u`
+`yarn arango-migrate -u`
 
 Runs all unapplied migrations.
 
-`arango-migrate -u -t 1`
+`yarn arango-migrate -u -t 1`
 
 Runs all unapplied migrations up to and including version 1.
+
+## Understanding ArangoDB transactions and the step function
+
+Individual migrations are ran within a transaction in order to keep the database in a valid state if a migration fails. The migration's transaction is committed to ArangoDB after the `up` or `down` functions are executed.
+
+Observe how the second argument of the `up` and `down` functions is a function called `step`. This is a special function which allows you to add valid ArangoDB operations to the transaction.
+
+For example in order to add a new document to the `todo` collection.
+
+```js
+const up = async (db, step) => {
+    const todoItem = await step(async () => await db.collection('todo').save({
+        _key: '1',
+        name: 'Buy milk'
+    }))
+    return todoItem;
+}
+```
+
+**Read more about transactions in ArangoDB**
+
+- https://github.com/arangodb/arangojs/blob/main/src/transaction.ts#L168
+- https://www.arangodb.com/docs/stable/transactions.html
 
 ### Anatomy of a migration
 

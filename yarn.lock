@@ -1846,10 +1846,10 @@ anymatch@^3.0.3:
     normalize-path "^3.0.0"
     picomatch "^2.0.4"
 
-arangojs@7.6.1:
-  version "7.6.1"
-  resolved "https://registry.yarnpkg.com/arangojs/-/arangojs-7.6.1.tgz#8db79bf9a00ba97fb0bdb3d07f38a5e0cd0e2eaa"
-  integrity sha512-GfZQykBwBdRl32/RGy1NLIq8LTYW+PW6uU10B5uuZe5gIJpo8YLQhJBu6XwGfEyQrpb4CEMhmK1SgqdRgFnSxA==
+arangojs@7.7.0:
+  version "7.7.0"
+  resolved "https://registry.yarnpkg.com/arangojs/-/arangojs-7.7.0.tgz#3286bb75a0b063b699f153a76e83deb4967ef0a8"
+  integrity sha512-U73Xez7/WeuvHHBoBuq3ew06erXzOpJq7kopBHfuOi6JQ9sarHf/NQzhgCGQF43O2U2OcqpY8bh1+4qnFnJt8g==
   dependencies:
     "@types/node" ">=13.13.4"
     es6-error "^4.0.1"

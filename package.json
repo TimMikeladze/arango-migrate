@@ -40,8 +40,8 @@
   "devDependencies": {
     "@types/glob": "7.2.0",
     "@types/jest": "27.4.0",
-    "@typescript-eslint/eslint-plugin": "5.10.2",
-    "@typescript-eslint/parser": "5.10.2",
+    "@typescript-eslint/eslint-plugin": "5.11.0",
+    "@typescript-eslint/parser": "5.11.0",
     "dotenv": "15.0.0",
     "eslint": "8.8.0",
     "eslint-config-standard": "16.0.3",

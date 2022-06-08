@@ -1,4 +1,4 @@
-name: Tests
+name: Main CI Workflow
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       ARANGO_USERNAME: root
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.x]
 
     steps:
       - uses: xinova/arangodb-action@v1

@@ -19,13 +19,18 @@
   ],
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
-  "main": "dist/index.umd.js",
-  "module": "dist/index.module.js",
-  "exports": "./dist/index.modern.js",
-  "bin": "./dist/cli.js",
+  "type": "module",
+  "exports": {
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.modern.js"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.module.js",
+  "unpkg": "./dist/index.umd.js",
+  "bin": "./dist/cli.module.js",
   "scripts": {
-    "dev": "microbundle watch src/{index,cli}.ts",
-    "build": "microbundle src/{index,cli}.ts",
+    "dev": "microbundle watch src/{index,cli}.ts --target node",
+    "build": "rm -rf dist; tsc; microbundle src/{index,cli}.ts --target node",
     "lint": "eslint --fix {src,__tests__}/**/*.ts",
     "test": "jest --coverage",
     "commit": "git-cz"

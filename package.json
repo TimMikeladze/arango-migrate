@@ -27,7 +27,8 @@
     "dev": "microbundle watch src/{index,cli}.ts",
     "build": "microbundle src/{index,cli}.ts",
     "lint": "eslint --fix {src,__tests__}/**/*.ts",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "commit": "git-cz"
   },
   "lint-staged": {
     "*.ts": "eslint --fix"
@@ -37,7 +38,14 @@
       "pre-commit": "lint-staged"
     }
   },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/@ryansonshine/cz-conventional-changelog"
+    }
+  },
   "devDependencies": {
+    "@ryansonshine/commitizen": "4.2.8",
+    "@ryansonshine/cz-conventional-changelog": "3.3.4",
     "@types/glob": "7.2.0",
     "@types/jest": "27.5.2",
     "@typescript-eslint/eslint-plugin": "5.27.1",

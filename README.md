@@ -36,15 +36,16 @@ Example:
 import 'dotenv/config'
 
 export default {
-  dbConfig: {
+    dbConfig: {
     databaseName: process.env.ARANGO_NAME,
     url: process.env.ARANGO_URL,
-    auth: {
-      username: process.env.ARANGO_USERNAME,
-      password: process.env.ARANGO_PASSWORD || ''
-    }
-  },
-  migrationsPath: './migrations'
+        auth: {
+          username: process.env.ARANGO_USERNAME,
+          password: process.env.ARANGO_PASSWORD || ''
+        }
+    }, 
+    autoCreateNewCollections: true, // defaults to true if not specified
+    migrationsPath: './migrations'
 }
 ```
 

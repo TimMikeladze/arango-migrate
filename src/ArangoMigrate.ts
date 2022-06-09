@@ -89,8 +89,18 @@ export interface MigrationHistory {
 }
 
 export interface ArangoMigrateOptions {
-    dbConfig: Config
-    migrationsPath: string
+  /**
+   * ArangoDB connection options.
+   */
+  dbConfig: Config
+  /**
+   * Path to the directory containing the migration files.
+   */
+  migrationsPath: string
+  /**
+   * Automatically create referenced collections if they do not exist. Defaults to `true`.
+   */
+  autoCreateNewCollections?: boolean
 }
 
 const isString = (s): boolean => {
@@ -265,13 +275,20 @@ export class ArangoMigrate {
       allCollectionNames.add(data.collectionName)
       let collection
       try {
-        collection = await this.db.createCollection(data.collectionName, data.options)
-        createdCollectionCount++
-        newCollections.add(collection)
+        if (this.options.autoCreateNewCollections !== false) {
+          collection = await this.db.createCollection(data.collectionName, data.options)
+          createdCollectionCount++
+          newCollections.add(collection)
+        }
       } catch {
         collection = this.db.collection(data.collectionName)
+        if (!collection) {
+          throw new Error(`Collection ${data.collectionName} not found.`)
+        }
       }
-      transactionCollections.push(collection)
+      if (collection) {
+        transactionCollections.push(collection)
+      }
     }
 
     return {

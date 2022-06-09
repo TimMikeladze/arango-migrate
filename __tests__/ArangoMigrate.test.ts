@@ -480,3 +480,21 @@ describe('runUpMigrations/runDownMigrations - uses transaction options', () => {
     expect(migration.transactionOptions).toHaveBeenCalled()
   })
 })
+
+describe('runUpMigrations/runDownMigrations - autoCreateNewCollections: false', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      autoCreateNewCollections: false
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('fails because collection does not exist', async () => {
+    await expect(tu.context.am.runUpMigrations()).rejects.toThrowError()
+  })
+})

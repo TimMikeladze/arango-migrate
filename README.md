@@ -23,6 +23,8 @@ Options:
   -i --init <name>       initialize a new migration file
   -l --list              list all applied migrations
   -dr --dry-run          dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log
+  -nh --no-history       Skips writing to the migration history log. Use this with caution since the applied migrations will not be saved in the migration
+                         history log, opening the possibility of applying the same migration multiple times and potentially dirtying your data
   -h, --help             display help for command
 ```
 

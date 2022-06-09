@@ -1,8 +1,7 @@
 import { Config } from 'arangojs/connection'
-import { Database } from 'arangojs/database'
 import glob from 'glob'
 import path from 'path'
-import { aql } from 'arangojs'
+import { aql, Database } from 'arangojs'
 import { CollectionType, CreateCollectionOptions, DocumentCollection, EdgeCollection } from 'arangojs/collection'
 import fs from 'fs'
 import slugify from 'slugify'
@@ -58,7 +57,8 @@ const MIGRATION_TEMPLATE_JS = `const migration = {
   async up (db, step) {
   }
 }
-module.exports = migration`
+
+export default migration`
 
 const MIGRATION_TEMPLATE_TS = `import { Collections, Migration, StepFunction } from 'arango-migrate'
 import { Database } from 'arangojs'
@@ -88,17 +88,21 @@ export class ArangoMigrate {
     this.migrationPaths = this.loadMigrationPaths(this.migrationsPath)
   }
 
-  public static validateConfigPath (configPath: string = DEFAULT_CONFIG_PATH) {
+  public static async loadConfig (configPath: string = DEFAULT_CONFIG_PATH): Promise<ArangoMigrateOptions> {
     const p = path.resolve(configPath)
     if (!fs.existsSync((p))) {
       throw new Error(`Config file ${p} not found`)
     }
 
-    const config: ArangoMigrateOptions = require(p)
+    const importedConfig = await import(p)
+
+    const config: ArangoMigrateOptions = importedConfig.default
 
     if (!config.dbConfig) {
       throw new Error('Config object must contain a dbConfig property')
     }
+
+    return config
   }
 
   public loadMigrationPaths (migrationsPath: string) {
@@ -133,12 +137,15 @@ export class ArangoMigrate {
     })
   }
 
-  public getMigrationFromVersion (version: number): Migration {
-    return require(this.migrationPaths.find(x => {
+  public async getMigrationFromVersion (version: number): Promise<Migration> {
+    const migrationPath = this.migrationPaths.find(x => {
       const basename = path.basename(x)
 
       return version === Number(basename.split('_')[0]) && fs.existsSync(path.resolve(x))
-    }))
+    })
+
+    const importedMigration = await import(migrationPath)
+    return importedMigration.default
   }
 
   public async getMigrationHistoryCollection (collectionName: string) {
@@ -231,7 +238,7 @@ export class ArangoMigrate {
     for (let i = start; i <= (to || latestMigration?.version); i++) {
       let migration: Migration
       try {
-        migration = this.getMigrationFromVersion(i)
+        migration = await this.getMigrationFromVersion(i)
       } catch (err) {
         console.log(err)
         return
@@ -314,7 +321,7 @@ export class ArangoMigrate {
     for (let i = latestMigration.version; i >= to; i--) {
       let migration: Migration
       try {
-        migration = this.getMigrationFromVersion(i)
+        migration = await this.getMigrationFromVersion(i)
       } catch (err) {
         console.log(err)
         return

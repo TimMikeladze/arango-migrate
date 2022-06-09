@@ -1,6 +1,6 @@
 {
   "name": "arango-migrate",
-  "version": "0.0.3",
+  "version": "0.0.3-beta.1",
   "description": "Migration tools for ArangoDB",
   "author": "Tim Mikeladze <tim.mikeladze@gmail.com>",
   "keywords": [
@@ -19,16 +19,22 @@
   ],
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
-  "main": "dist/index.umd.js",
-  "module": "dist/index.module.js",
-  "exports": "./dist/index.modern.js",
-  "bin": "./dist/cli.js",
+  "type": "module",
+  "exports": {
+    "require": "./dist/index.cjs",
+    "default": "./dist/index.modern.js"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.module.js",
+  "unpkg": "./dist/index.umd.js",
+  "bin": "./dist/cli.module.js",
   "scripts": {
-    "dev": "microbundle watch src/{index,cli}.ts",
-    "build": "microbundle src/{index,cli}.ts",
+    "dev": "microbundle watch src/{index,cli}.ts --target node",
+    "build": "rm -rf dist; tsc; microbundle src/{index,cli}.ts --target node",
     "lint": "eslint --fix {src,__tests__}/**/*.ts",
-    "test": "jest --coverage",
-    "commit": "git-cz"
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest) --coverage",
+    "commit": "git-cz",
+    "prepublishOnly": "yarn lint; yarn build"
   },
   "lint-staged": {
     "*.ts": "eslint --fix"
@@ -47,7 +53,7 @@
     "@ryansonshine/commitizen": "4.2.8",
     "@ryansonshine/cz-conventional-changelog": "3.3.4",
     "@types/glob": "7.2.0",
-    "@types/jest": "27.5.2",
+    "@types/jest": "28.1.1",
     "@typescript-eslint/eslint-plugin": "5.27.1",
     "@typescript-eslint/parser": "5.27.1",
     "dotenv": "16.0.1",
@@ -58,16 +64,16 @@
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "6.0.0",
     "husky": "8.0.1",
-    "jest": "27.5.1",
+    "jest": "28.1.1",
     "lint-staged": "13.0.1",
     "microbundle": "0.15.0",
-    "ts-jest": "27.1.5",
+    "ts-jest": "28.0.4",
     "typescript": "4.7.3"
   },
   "dependencies": {
     "arangojs": "7.8.0",
     "commander": "9.3.0",
-    "glob": "7.2.3",
+    "glob": "8.0.3",
     "slugify": "1.6.5"
   }
 }

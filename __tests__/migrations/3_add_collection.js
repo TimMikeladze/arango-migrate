@@ -6,4 +6,4 @@ const migration = {
     await db.collection('user').drop()
   }
 }
-module.exports = migration
+export default migration

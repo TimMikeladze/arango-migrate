@@ -141,7 +141,7 @@ export class ArangoMigrate {
   public static async loadConfig (configPath: string = DEFAULT_CONFIG_PATH): Promise<ArangoMigrateOptions> {
     const p = path.resolve(configPath)
     if (!fs.existsSync((p))) {
-      throw new Error(`Config file ${p} not found`)
+      throw new Error(`Config file ${p} not found.`)
     }
 
     const importedConfig = await import(p)
@@ -149,7 +149,7 @@ export class ArangoMigrate {
     const config: ArangoMigrateOptions = importedConfig.default
 
     if (!config.dbConfig) {
-      throw new Error('Config object must contain a dbConfig property')
+      throw new Error('Config object must contain a dbConfig property.')
     }
 
     return config
@@ -272,7 +272,7 @@ export class ArangoMigrate {
     }
   }
 
-  public async runUpMigrations (to?: number, dryRun?: boolean) {
+  public async runUpMigrations (to?: number, dryRun?: boolean): Promise<number> {
     const versions = this.getVersionsFromMigrationPaths()
     if (!to) {
       to = versions[versions.length - 1]
@@ -284,6 +284,8 @@ export class ArangoMigrate {
     if (latestMigration?.version) {
       start = latestMigration.direction === 'up' ? latestMigration.version + 1 : latestMigration.version
     }
+
+    let count = 0
 
     for (let i = start; i <= (to || latestMigration?.version); i++) {
       let migration: Migration
@@ -315,7 +317,7 @@ export class ArangoMigrate {
           upResult = await migration.up(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeUpData)
         } catch (err) {
           console.log(err)
-          error = new Error(`Running up failed for migration ${i}`)
+          error = new Error(`Running up failed for migration ${i}.`)
         }
       }
 
@@ -324,10 +326,10 @@ export class ArangoMigrate {
           const transactionStatus = await transaction.commit()
 
           if (transactionStatus.status !== 'committed') {
-            error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}`)
+            error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}.`)
           }
         } catch (err) {
-          error = new Error('Transaction failed')
+          error = new Error('Transaction failed.')
         }
       }
 
@@ -336,7 +338,7 @@ export class ArangoMigrate {
           await migration.afterUp(this.db, upResult)
         }
       } catch (err) {
-        error = new Error('afterUp threw an error ' + err)
+        error = new Error(`afterUp threw an error ${err}.`)
       }
 
       if (error) {
@@ -354,20 +356,23 @@ export class ArangoMigrate {
       if (error) {
         throw error
       }
+      count += 1
     }
+    return count
   }
 
-  public async runDownMigrations (to?: number, dryRun?: boolean) {
+  public async runDownMigrations (to?: number, dryRun?: boolean): Promise<number> {
     const latestMigration = await this.getLatestMigration()
 
     if (!latestMigration) {
-      throw new Error('No migrations have been applied')
+      throw new Error('No migrations have been applied.')
     }
 
     if (!to) {
       to = 1
     }
 
+    let count = 0
     for (let i = latestMigration.version; i >= to; i--) {
       let migration: Migration
       try {
@@ -400,7 +405,7 @@ export class ArangoMigrate {
           downResult = await migration.down(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeDownData)
         } catch (err) {
           console.log(err)
-          error = new Error(`Running up failed for migration ${i}`)
+          error = new Error(`Running up failed for migration ${i}.`)
         }
       }
 
@@ -409,10 +414,10 @@ export class ArangoMigrate {
           const transactionStatus = await transaction.commit()
 
           if (transactionStatus.status !== 'committed') {
-            error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}`)
+            error = new Error(`Transaction failed with status ${transactionStatus.status} for migration ${name}.`)
           }
         } catch (err) {
-          error = new Error('Transaction failed')
+          error = new Error('Transaction failed.')
         }
       }
 
@@ -421,7 +426,7 @@ export class ArangoMigrate {
           await migration.afterDown(this.db, downResult)
         }
       } catch (err) {
-        error = new Error('afterDown threw an error ' + err)
+        error = new Error(`afterDown threw an error ${err}.`)
       }
 
       if (error) {
@@ -439,7 +444,9 @@ export class ArangoMigrate {
       if (error) {
         throw error
       }
+      count += 1
     }
+    return count
   }
 
   public getVersionsFromMigrationPaths (): number[] {
@@ -450,7 +457,7 @@ export class ArangoMigrate {
 
   public validateMigrationFolderNotEmpty () {
     if (this.migrationPaths.length === 0) {
-      throw new Error('No migrations')
+      throw new Error('No migrations.')
     }
   }
 
@@ -458,7 +465,7 @@ export class ArangoMigrate {
     const versions = this.getVersionsFromMigrationPaths()
 
     if (!versions || versions.length !== new Set(versions).size) {
-      throw new Error('Migration versions must be unique')
+      throw new Error('Migration versions must be unique.')
     }
 
     if (versions.length) {
@@ -467,7 +474,7 @@ export class ArangoMigrate {
         if (versions.length > Number(index)) {
           const next = versions[index + 1]
           if (next && current + 1 !== next) {
-            throw new Error('Migrations must be numbered consecutively')
+            throw new Error('Migrations must be numbered consecutively.')
           }
         }
       }
@@ -478,17 +485,17 @@ export class ArangoMigrate {
     const latestMigration = await this.getLatestMigration()
 
     if (!latestMigration && version > 1) {
-      throw new Error(`Migration sequence must start with 1, not ${version}`)
+      throw new Error(`Migration sequence must start with 1, not ${version}.`)
     }
 
     if (latestMigration && version > Number(latestMigration.version) + 1) {
-      throw new Error(`Migration must be ran in sequence. ${version} must immediately follow ${latestMigration.version}`)
+      throw new Error(`Migration must be ran in sequence. ${version} must immediately follow ${latestMigration.version}.`)
     }
 
     if (latestMigration && version <= Number(latestMigration.version)) {
       const name = this.getMigrationPathFromVersion((version))
 
-      throw new Error(`Cannot run up migration ${name} because migration has already been applied`)
+      throw new Error(`Cannot run up migration ${name} because migration has already been applied.`)
     }
   }
 

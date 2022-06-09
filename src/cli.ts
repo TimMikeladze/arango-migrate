@@ -21,7 +21,7 @@ interface CommanderOptions {
 
   program
     .option('-c, --config <config>', 'path to a js config file. Defaults to ./config.migrate.js')
-    .option('-u, --up', 'run up migrations. Defaults to running all unapplied migrations if no --to parameter is provided')
+    .option('-u, --up', 'run up migrations. Defaults to running all un-applied migrations if no --to parameter is provided')
     .option('-d, --down', 'run down migrations')
     .option('-t, --to <version>', 'run migrations to and including a specific version')
     .option('-i --init <name>', 'initialize a new migration file')
@@ -42,13 +42,13 @@ interface CommanderOptions {
     if (options.list) {
       const history = await am.getMigrationHistory()
       if (!history.length) {
-        console.log('No migration history')
+        console.log('No migration history.')
       } else {
         console.table(history)
       }
       process.exit(0)
     } else if (options.init) {
-      console.log('Migration created at ' + am.writeNewMigration(options.init, options.typescript))
+      console.log(`Migration created at ${am.writeNewMigration(options.init, options.typescript)}.`)
       process.exit(0)
     } else if (options.up) {
       am.validateMigrationFolderNotEmpty()
@@ -59,11 +59,15 @@ interface CommanderOptions {
       const to = Number(single ? options.single : options.to)
 
       if (!await am.hasNewMigrations() && !options.dryRun) {
-        console.log('No new migrations to run')
+        console.log('No new migrations to run.')
         process.exit(0)
       }
-      await am.runUpMigrations(to, options.dryRun)
-      console.log('Up migrations applied')
+      const count = await am.runUpMigrations(to, options.dryRun)
+      if (options.dryRun) {
+        console.log(`${count} \`up\` migrations dry ran.`)
+      } else {
+        console.log(`${count} \`up\` migrations applied.`)
+      }
       process.exit(0)
     } else if (options.down) {
       am.validateMigrationFolderNotEmpty()
@@ -71,8 +75,12 @@ interface CommanderOptions {
 
       const to = Number(options.to)
 
-      await am.runDownMigrations(to, options.dryRun)
-      console.log('Down migrations applied')
+      const count = await am.runDownMigrations(to, options.dryRun)
+      if (options.dryRun) {
+        console.log(`${count} \`down\` migrations dry ran.`)
+      } else {
+        console.log(`${count} \`down\` migrations applied.`)
+      }
       process.exit(0)
     }
   })

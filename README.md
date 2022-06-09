@@ -4,7 +4,11 @@ Migration tools for ArangoDB.
 
 ## Getting Started
 
-> yarn add arango-migrate --dev
+```console
+yarn add arango-migrate -D
+```
+
+**Note:** Check out a functioning sample in the [arango-migrate-example](https://github.com/TimMikeladze/arango-migrate-example) repository.
 
 ## Usage
 

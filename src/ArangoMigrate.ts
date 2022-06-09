@@ -5,6 +5,7 @@ import { aql, Database } from 'arangojs'
 import { CollectionType, CreateCollectionOptions, DocumentCollection, EdgeCollection } from 'arangojs/collection'
 import fs from 'fs'
 import slugify from 'slugify'
+import { TransactionOptions } from 'arangojs/database'
 
 type Collection = DocumentCollection<any> & EdgeCollection<any>
 
@@ -25,6 +26,11 @@ export interface Migration {
    * @returns {Promise<Collections>} An array of collection names or an array of collection options.
    */
   collections(): Promise<Collections>;
+  /**
+   * Optional function that configures how the transaction will be executed. See ArangoDB documentation for more information.
+   * @returns {Promise<TransactionOptions>} - The transaction options.
+   */
+  transactionOptions?: () => Promise<TransactionOptions>;
   /**
    * Optional description of what the migration does. This value will be stored in the migration log.
    */
@@ -307,7 +313,9 @@ export class ArangoMigrate {
         beforeUpData = await migration.beforeUp(this.db)
       }
 
-      const transaction = await this.db.beginTransaction(transactionCollections)
+      const transactionOptions = await migration.transactionOptions?.()
+
+      const transaction = await this.db.beginTransaction(transactionCollections, transactionOptions)
 
       let error
       let upResult

@@ -441,3 +441,42 @@ describe('runUpMigrations - dry run', () => {
     expect(migrationTwo.afterUp).toHaveBeenCalledWith(expect.any(Database), 2)
   })
 })
+
+describe('runUpMigrations/runDownMigrations - uses transaction options', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('calls transactionOptions', async () => {
+    const migration: Migration = {
+      async collections () {
+        return ['todo']
+      },
+      transactionOptions: jest.fn(async () => ({
+        waitForSync: true
+      })),
+      up: async (db, step, data) => {
+        await step(() => db.collection('todo').save({
+          _key: '1',
+          title: 'Buy milk',
+          completed: false
+        }))
+        return data + 1
+      }
+    }
+
+    tu.context.am.getMigrationFromVersion = async () => migration
+
+    await tu.context.am.runUpMigrations(1)
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(1)
+    expect(migration.transactionOptions).toHaveBeenCalled()
+  })
+})

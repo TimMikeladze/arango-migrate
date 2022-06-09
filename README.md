@@ -117,6 +117,11 @@ export interface Migration {
    */
   collections(): Promise<Collections>;
   /**
+   * Optional function that configures how the transaction will be executed. See ArangoDB documentation for more information.
+   * @returns {Promise<TransactionOptions>} - The transaction options.
+   */
+  transactionOptions?: () => Promise<TransactionOptions>;
+  /**
    * Optional description of what the migration does. This value will be stored in the migration log.
    */
   description?: string,

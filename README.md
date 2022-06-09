@@ -1,6 +1,6 @@
 # arango-migrate
 
-Migration tools for ArangoDB.
+Apply migrations to an ArangoDB in a transaction-safe manner with optional before/after hooks and dry-run support.
 
 ## Getting Started
 

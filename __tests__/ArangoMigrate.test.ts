@@ -498,3 +498,21 @@ describe('runUpMigrations/runDownMigrations - autoCreateNewCollections: false', 
     await expect(tu.context.am.runUpMigrations()).rejects.toThrowError()
   })
 })
+
+describe('runUpMigrations - noHistory', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('runs migrations but does not write to the migration history log', async () => {
+    await tu.context.am.runUpMigrations(undefined, undefined, true)
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(0)
+  })
+})

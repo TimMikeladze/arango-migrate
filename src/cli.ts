@@ -10,9 +10,10 @@ interface CommanderOptions {
     dryRun?: boolean,
     init?: string,
     list?: boolean,
+    noHistory?: boolean,
     single?: number,
     to?: number,
-    typescript?: boolean
+    typescript?: boolean,
     up?: boolean
 }
 
@@ -27,6 +28,7 @@ interface CommanderOptions {
     .option('-i --init <name>', 'initialize a new migration file')
     .option('-l --list', 'list all applied migrations')
     .option('-dr --dry-run', 'dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log')
+    .option('-nh --no-history', 'Skips writing to the migration history log. Use this with caution since the applied migrations will not be saved in the migration history log, opening the possibility of applying the same migration multiple times and potentially dirtying your data')
 
   program.parse(process.argv)
 
@@ -62,7 +64,7 @@ interface CommanderOptions {
         console.log('No new migrations to run.')
         process.exit(0)
       }
-      const { createdCollections, appliedMigrations } = await am.runUpMigrations(to, options.dryRun)
+      const { createdCollections, appliedMigrations } = await am.runUpMigrations(to, options.dryRun, options.noHistory)
       console.log(`${createdCollections} collections created.`)
       if (options.dryRun) {
         console.log(`${appliedMigrations} \`up\` migrations dry ran.`)
@@ -77,7 +79,7 @@ interface CommanderOptions {
 
       const to = Number(options.to)
 
-      const { createdCollections, appliedMigrations } = await am.runDownMigrations(to, options.dryRun)
+      const { createdCollections, appliedMigrations } = await am.runDownMigrations(to, options.dryRun, options.noHistory)
       console.log(`${createdCollections} collections created.`)
       if (options.dryRun) {
         console.log(`${appliedMigrations} \`down\` migrations dry ran.`)

@@ -299,7 +299,7 @@ export class ArangoMigrate {
     }
   }
 
-  public async runUpMigrations (to?: number, dryRun?: boolean): Promise<{
+  public async runUpMigrations (to?: number, dryRun?: boolean, noHistory?: boolean): Promise<{
     appliedMigrations: number
     createdCollections: number
   }> {
@@ -382,7 +382,7 @@ export class ArangoMigrate {
       }
 
       if (!error) {
-        if (!dryRun) {
+        if (!dryRun && noHistory !== true) {
           await this.writeMigrationHistory('up', name, migration.description, i)
         }
       }
@@ -395,7 +395,7 @@ export class ArangoMigrate {
     return { appliedMigrations, createdCollections }
   }
 
-  public async runDownMigrations (to?: number, dryRun?: boolean): Promise<{ appliedMigrations: number, createdCollections: number; }> {
+  public async runDownMigrations (to?: number, dryRun?: boolean, noHistory?: boolean): Promise<{ appliedMigrations: number, createdCollections: number; }> {
     const latestMigration = await this.getLatestMigration()
 
     if (!latestMigration) {
@@ -474,7 +474,7 @@ export class ArangoMigrate {
       }
 
       if (!error) {
-        if (!dryRun) {
+        if (!dryRun && noHistory !== true) {
           await this.writeMigrationHistory('down', name, migration.description, i)
         }
       }

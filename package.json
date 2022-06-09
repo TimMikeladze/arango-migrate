@@ -7,7 +7,9 @@
     "arango",
     "arangodb",
     "arango migrations",
-    "migration"
+    "migration",
+    "arango-migrate",
+    "arangodb migrations"
   ],
   "repository": {
     "type": "git",

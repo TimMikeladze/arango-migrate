@@ -254,6 +254,8 @@ export class ArangoMigrate {
 
     const transactionCollections = []
 
+    let createdCollectionCount = 0
+
     for (const collectionData of collections) {
       const data = (isString(collectionData)
         ? {
@@ -264,6 +266,7 @@ export class ArangoMigrate {
       let collection
       try {
         collection = await this.db.createCollection(data.collectionName, data.options)
+        createdCollectionCount++
         newCollections.add(collection)
       } catch {
         collection = this.db.collection(data.collectionName)
@@ -274,11 +277,15 @@ export class ArangoMigrate {
     return {
       transactionCollections,
       newCollections,
-      allCollectionNames
+      allCollectionNames,
+      createdCollectionCount
     }
   }
 
-  public async runUpMigrations (to?: number, dryRun?: boolean): Promise<number> {
+  public async runUpMigrations (to?: number, dryRun?: boolean): Promise<{
+    appliedMigrations: number
+    createdCollections: number
+  }> {
     const versions = this.getVersionsFromMigrationPaths()
     if (!to) {
       to = versions[versions.length - 1]
@@ -291,7 +298,8 @@ export class ArangoMigrate {
       start = latestMigration.direction === 'up' ? latestMigration.version + 1 : latestMigration.version
     }
 
-    let count = 0
+    let appliedMigrations = 0
+    let createdCollections = 0
 
     for (let i = start; i <= (to || latestMigration?.version); i++) {
       let migration: Migration
@@ -306,7 +314,8 @@ export class ArangoMigrate {
 
       const collectionNames = migration.collections ? await migration.collections() : []
 
-      const { transactionCollections, newCollections } = await this.initializeTransactionCollections(collectionNames)
+      const { transactionCollections, newCollections, createdCollectionCount } = await this.initializeTransactionCollections(collectionNames)
+      createdCollections += createdCollectionCount
 
       let beforeUpData
       if (migration.beforeUp) {
@@ -364,12 +373,12 @@ export class ArangoMigrate {
       if (error) {
         throw error
       }
-      count += 1
+      appliedMigrations += 1
     }
-    return count
+    return { appliedMigrations, createdCollections }
   }
 
-  public async runDownMigrations (to?: number, dryRun?: boolean): Promise<number> {
+  public async runDownMigrations (to?: number, dryRun?: boolean): Promise<{ createdCollections: number; appliedMigrations: number }> {
     const latestMigration = await this.getLatestMigration()
 
     if (!latestMigration) {
@@ -380,7 +389,9 @@ export class ArangoMigrate {
       to = 1
     }
 
-    let count = 0
+    let appliedMigrations = 0
+    let createdCollections = 0
+
     for (let i = latestMigration.version; i >= to; i--) {
       let migration: Migration
       try {
@@ -394,7 +405,9 @@ export class ArangoMigrate {
 
       const collectionNames = migration.collections ? await migration.collections() : []
 
-      const { transactionCollections, newCollections } = await this.initializeTransactionCollections(collectionNames)
+      const { transactionCollections, newCollections, createdCollectionCount } = await this.initializeTransactionCollections(collectionNames)
+
+      createdCollections += createdCollectionCount
 
       let error
 
@@ -452,9 +465,9 @@ export class ArangoMigrate {
       if (error) {
         throw error
       }
-      count += 1
+      appliedMigrations += 1
     }
-    return count
+    return { appliedMigrations, createdCollections }
   }
 
   public getVersionsFromMigrationPaths (): number[] {

@@ -62,12 +62,14 @@ interface CommanderOptions {
         console.log('No new migrations to run.')
         process.exit(0)
       }
-      const count = await am.runUpMigrations(to, options.dryRun)
+      const { createdCollections, appliedMigrations } = await am.runUpMigrations(to, options.dryRun)
+      console.log(`${createdCollections} collections created.`)
       if (options.dryRun) {
-        console.log(`${count} \`up\` migrations dry ran.`)
+        console.log(`${appliedMigrations} \`up\` migrations dry ran.`)
       } else {
-        console.log(`${count} \`up\` migrations applied.`)
+        console.log(`${appliedMigrations} \`up\` migrations applied.`)
       }
+
       process.exit(0)
     } else if (options.down) {
       am.validateMigrationFolderNotEmpty()
@@ -75,12 +77,14 @@ interface CommanderOptions {
 
       const to = Number(options.to)
 
-      const count = await am.runDownMigrations(to, options.dryRun)
+      const { createdCollections, appliedMigrations } = await am.runDownMigrations(to, options.dryRun)
+      console.log(`${createdCollections} collections created.`)
       if (options.dryRun) {
-        console.log(`${count} \`down\` migrations dry ran.`)
+        console.log(`${appliedMigrations} \`down\` migrations dry ran.`)
       } else {
-        console.log(`${count} \`down\` migrations applied.`)
+        console.log(`${appliedMigrations} \`down\` migrations applied.`)
       }
+
       process.exit(0)
     }
   })

@@ -14,4 +14,4 @@ const migration = {
     await db.collection('todo').dropIndex('index_todo_completed')
   }
 }
-module.exports = migration
+export default migration

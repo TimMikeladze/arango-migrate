@@ -17,4 +17,4 @@ const migration = {
   async down (db, step, data) {
   }
 }
-module.exports = migration
+export default migration

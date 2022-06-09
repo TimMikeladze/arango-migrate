@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import { ArangoMigrate, Migration } from '../src/ArangoMigrate'
 import { Database } from 'arangojs/database'
+import { jest } from '@jest/globals'
 
 describe('loadMigrationPaths', () => {
   let tu: TestUtil
@@ -78,7 +79,8 @@ describe('getMigrationFromVersion', () => {
     await tu.destroy()
   })
   it('returns migration given a version', async () => {
-    expect(tu.context.am.getMigrationFromVersion(1).collections()).toBeDefined()
+    const migration = await tu.context.am.getMigrationFromVersion(1)
+    expect(migration.collections()).toBeDefined()
   })
 })
 
@@ -353,7 +355,7 @@ describe('runUpMigrations/runDownMigrations - runs all lifecycle functions', () 
         }))
         return data + 1
       }),
-      afterUp: jest.fn(),
+      afterUp: jest.fn() as any,
       beforeDown: jest.fn(async () => 1),
       down: jest.fn(async (db, step, data) => {
         await step(() => db.collection('todo').remove({
@@ -361,9 +363,9 @@ describe('runUpMigrations/runDownMigrations - runs all lifecycle functions', () 
         }))
         return data + 1
       }),
-      afterDown: jest.fn()
+      afterDown: jest.fn() as any
     }
-    tu.context.am.getMigrationFromVersion = () => migration
+    tu.context.am.getMigrationFromVersion = async () => migration
 
     await tu.context.am.runUpMigrations(1)
     expect(await tu.context.am.getMigrationHistory()).toHaveLength(1)
@@ -408,7 +410,7 @@ describe('runUpMigrations - dry run', () => {
         }))
         return data + 1
       }),
-      afterUp: jest.fn()
+      afterUp: jest.fn() as any
     }
     const migrationTwo: Migration = {
       async collections () {
@@ -423,9 +425,9 @@ describe('runUpMigrations - dry run', () => {
         }))
         return data + 1
       }),
-      afterUp: jest.fn()
+      afterUp: jest.fn() as any
     }
-    tu.context.am.getMigrationFromVersion = (version) => version === 1 ? migrationOne : migrationTwo
+    tu.context.am.getMigrationFromVersion = async (version) => version === 1 ? migrationOne : migrationTwo
 
     await tu.context.am.runUpMigrations(2, true)
     expect(await tu.context.am.getMigrationHistory()).toHaveLength(0)

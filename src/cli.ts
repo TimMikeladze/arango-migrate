@@ -34,9 +34,9 @@ interface CommanderOptions {
 
   const configPath = path.resolve(options.config || DEFAULT_CONFIG_PATH)
 
-  ArangoMigrate.validateConfigPath(configPath)
+  const config = await ArangoMigrate.loadConfig(configPath)
 
-  const am = new ArangoMigrate(require(configPath))
+  const am = new ArangoMigrate(config)
 
   am.initialize().then(async () => {
     if (options.list) {

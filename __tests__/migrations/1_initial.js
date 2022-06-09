@@ -16,4 +16,5 @@ const migration = {
     }))
   }
 }
-module.exports = migration
+
+export default migration

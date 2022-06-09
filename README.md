@@ -29,9 +29,9 @@ Create a `config.migrate.js` file in the root of your project. This file contain
 Example:
 
 ```js
-require('dotenv').config()
+import 'dotenv/config'
 
-module.exports = {
+export default {
   dbConfig: {
     databaseName: process.env.ARANGO_NAME,
     url: process.env.ARANGO_URL,
@@ -65,7 +65,7 @@ const migration = {
         }))
     }
 }
-module.exports = migration
+export default migration
 ```
 
 ### Running up migrations
@@ -126,5 +126,5 @@ const migration = {
     async afterDown (db, data) {
     }
 }
-module.exports = migration
+export default migration
 ```

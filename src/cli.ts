@@ -5,15 +5,15 @@ import * as path from 'path'
 import { ArangoMigrate, DEFAULT_CONFIG_PATH } from './ArangoMigrate'
 
 interface CommanderOptions {
-    up?: boolean
+    config?: string,
     down?: boolean
-    config?: string
-    to?: number
-    single?: number
-    init?: string
-    list?: boolean
+    dryRun?: boolean,
+    init?: string,
+    list?: boolean,
+    single?: number,
+    to?: number,
     typescript?: boolean
-    dryRun?: boolean
+    up?: boolean
 }
 
 (async () => {

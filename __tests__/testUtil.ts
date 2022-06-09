@@ -5,11 +5,11 @@ import { ArangoMigrate, ArangoMigrateOptions } from '../src/ArangoMigrate'
 export const nanoid = customAlphabet('1234567890abcdef', 4)
 
 export interface TestUtil {
-    destroy: () => Promise<void>;
     context: {
-      db: Database,
-      am: ArangoMigrate
-    }
+      am: ArangoMigrate,
+      db: Database
+    },
+    destroy: () => Promise<void>;
 }
 
 export const createArango = async (name?: string) => {

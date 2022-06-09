@@ -20,14 +20,55 @@ export type Collections = string[] | CollectionOptions[]
 export type StepFunction = (callback) => Promise<any>
 
 export interface Migration {
-    description?: string,
-    beforeUp?: (db: Database) => Promise<any>
-    up: (db: Database, step: StepFunction, data?: any) => Promise<any>;
-    afterUp?: (db: Database, data?: any) => Promise<void>
-    beforeDown?: (db: Database) => Promise<any>
-    down?: (db: Database, step: StepFunction, data?: any) => Promise<any>;
-    afterDown?: (db: Database, data?: any) => Promise<any>
-    collections(): Promise<Collections>;
+  /**
+   * Defines all the collections that will be used as part of this migration.
+   * @returns {Promise<Collections>} An array of collection names or an array of collection options.
+   */
+  collections(): Promise<Collections>;
+  /**
+   * Optional description of what the migration does. This value will be stored in the migration log.
+   */
+  description?: string,
+  /**
+   * Optional function that will be called before the migration's `up` function is executed.
+   * @param {Database} db -  Database instance.
+   * @returns {Promise<*>} - Value returned will be passed to the `up` function.
+   */
+  beforeUp?: (db: Database) => Promise<any>
+  /**
+   * Function that will be called to perform the `up` migration.
+   * @param {Database} - db Database instance.
+   * @param {StepFunction} - step The `step` function is used to add valid ArangoDB operations to the transaction.
+   * @param {*} data Optional value received from the `beforeUp` function.
+   */
+  up: (db: Database, step: StepFunction, data?: any) => Promise<any>;
+  /**
+   * Optional function that will be called after the migration's `up` function is executed.
+   * @param {Database} db - Database instance.
+   * @param {*} data - Value returned from the `up` function.
+   * @returns {Promise<*>} - Value returned will be passed to the `afterUp` function.
+   */
+  afterUp?: (db: Database, data?: any) => Promise<void>
+  /**
+   * Optional function that will be called before the migration's `down` function is executed.
+   * @param {Database} db - Database instance.
+   * @returns {Promise<*>} - Value returned will be passed to the `down` function.
+   */
+  beforeDown?: (db: Database) => Promise<any>
+  /**
+   * Function that will be called to perform the `down` migration.
+   * @param {Database} db - Database instance.
+   * @param {StepFunction} - step The `step` function is used to add valid ArangoDB operations to the transaction.
+   * @param {*} data - Optional value received from the `beforeDown` function.
+   */
+  down?: (db: Database, step: StepFunction, data?: any) => Promise<any>;
+  /**
+   * Optional function that will be called after the migration's `down` function is executed.
+   * @param {Database} db - Database instance.
+   * @param {*} data - Optional value received from the `beforeDown` function.
+   * @returns {Promise<*>} - Value returned will be passed to the `afterDown` function.
+   */
+  afterDown?: (db: Database, data?: any) => Promise<any>
 }
 
 export interface MigrationHistory {
@@ -50,7 +91,14 @@ const isString = (s): boolean => {
   return typeof (s) === 'string' || s instanceof String
 }
 
-const MIGRATION_TEMPLATE_JS = `const migration = {
+const MIGRATION_TEMPLATE_JS = `/**
+ * @typedef { import("arango-migrate").Migration } Migration
+ */
+
+/**
+ * @type { Migration }
+ */
+const migration = {
   async collections () {
     return []
   },
@@ -58,7 +106,8 @@ const MIGRATION_TEMPLATE_JS = `const migration = {
   }
 }
 
-export default migration`
+export default migration
+`
 
 const MIGRATION_TEMPLATE_TS = `import { Collections, Migration, StepFunction } from 'arango-migrate'
 import { Database } from 'arangojs'
@@ -70,7 +119,8 @@ const migration: Migration = {
   async up (db: Database, step: StepFunction) {}
 }
 
-export default migration`
+export default migration
+`
 
 export const DEFAULT_CONFIG_PATH = './config.migrate.js'
 export const DEFAULT_MIGRATIONS_PATH = './migrations'

@@ -32,11 +32,11 @@
   "bin": "./dist/cli.module.js",
   "scripts": {
     "dev": "microbundle watch src/{index,cli}.ts --target node",
-    "build": "rm -rf dist; tsc; microbundle src/{index,cli}.ts --target node",
+    "build": "rm -rf dist && tsc && microbundle src/{index,cli}.ts --target node",
     "lint": "eslint --fix {src,__tests__}/**/*.ts",
     "test": "yarn node --experimental-vm-modules $(yarn bin jest) --coverage",
     "commit": "git-cz",
-    "prepublishOnly": "yarn lint; yarn build"
+    "prepublishOnly": "yarn lint && yarn build"
   },
   "lint-staged": {
     "*.ts": "eslint --fix"

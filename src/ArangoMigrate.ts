@@ -98,6 +98,10 @@ export interface ArangoMigrateOptions {
    */
   dbConfig: Config,
   /**
+   * The collection in which the migration history will be stored. Defaults to `migration_history`.
+   */
+  migrationHistoryCollection?: string,
+  /**
    * Path to the directory containing the migration files.
    */
   migrationsPath: string
@@ -140,10 +144,11 @@ export default migration
 
 export const DEFAULT_CONFIG_PATH = './config.migrate.js'
 export const DEFAULT_MIGRATIONS_PATH = './migrations'
+export const DEFAULT_MIGRATION_HISTORY_COLLECTION = 'migration_history'
 
 export class ArangoMigrate {
   private readonly options: ArangoMigrateOptions
-  private readonly migrationHistoryCollectionName: string = 'migration_history'
+  private readonly migrationHistoryCollection: string
   private db: Database
   private readonly migrationPaths: string[]
   private readonly migrationsPath: string
@@ -151,6 +156,7 @@ export class ArangoMigrate {
   constructor (options: ArangoMigrateOptions) {
     this.options = options
     this.migrationsPath = this.options.migrationsPath || DEFAULT_MIGRATIONS_PATH
+    this.migrationHistoryCollection = this.options.migrationHistoryCollection || DEFAULT_MIGRATION_HISTORY_COLLECTION
     this.migrationPaths = this.loadMigrationPaths(this.migrationsPath)
   }
 
@@ -214,18 +220,18 @@ export class ArangoMigrate {
     return importedMigration.default
   }
 
-  public async getMigrationHistoryCollection (collectionName: string) {
+  public async getMigrationHistoryCollection () {
     let collection: DocumentCollection
     try {
-      collection = await this.db.createCollection(collectionName)
+      collection = await this.db.createCollection(this.migrationHistoryCollection)
     } catch {
-      collection = this.db.collection(collectionName)
+      collection = this.db.collection(this.migrationHistoryCollection)
     }
     return collection
   }
 
   public async getMigrationHistory (): Promise<MigrationHistory[]> {
-    const collection = await this.getMigrationHistoryCollection(this.migrationHistoryCollectionName)
+    const collection = await this.getMigrationHistoryCollection()
 
     return await (await this.db.query(aql`
       FOR x IN ${collection}
@@ -234,7 +240,7 @@ export class ArangoMigrate {
   }
 
   public async getLatestMigration (): Promise<MigrationHistory | null> {
-    const collection = await this.getMigrationHistoryCollection(this.migrationHistoryCollectionName)
+    const collection = await this.getMigrationHistoryCollection()
 
     return await (await this.db.query(aql`
       FOR x IN ${collection}
@@ -244,7 +250,7 @@ export class ArangoMigrate {
   }
 
   public async writeMigrationHistory (direction: 'up' | 'down', name: string, description: string, version: number) {
-    const collection = await this.getMigrationHistoryCollection(this.migrationHistoryCollectionName)
+    const collection = await this.getMigrationHistoryCollection()
 
     const latest = await this.getLatestMigration()
 

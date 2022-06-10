@@ -39,14 +39,15 @@ import 'dotenv/config'
 
 export default {
     dbConfig: {
-    databaseName: process.env.ARANGO_NAME,
-    url: process.env.ARANGO_URL,
-        auth: {
-          username: process.env.ARANGO_USERNAME,
-          password: process.env.ARANGO_PASSWORD || ''
+        databaseName: process.env.ARANGO_NAME,
+        url: process.env.ARANGO_URL,
+            auth: {
+              username: process.env.ARANGO_USERNAME,
+              password: process.env.ARANGO_PASSWORD || ''
         }
     }, 
     autoCreateNewCollections: true, // defaults to true if not specified
+    migrationHistoryCollection: 'migration_history', // defaults to 'migration_history' if not specified
     migrationsPath: './migrations'
 }
 ```

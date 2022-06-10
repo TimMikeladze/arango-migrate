@@ -96,7 +96,7 @@ describe('getMigrationHistoryCollection', () => {
     await tu.destroy()
   })
   it('returns collection', async () => {
-    expect((await tu.context.am.getMigrationHistoryCollection('migration_history')).name).toEqual('migration_history')
+    expect((await tu.context.am.getMigrationHistoryCollection()).name).toEqual('migration_history')
   })
 })
 
@@ -514,5 +514,27 @@ describe('runUpMigrations - noHistory', () => {
   it('runs migrations but does not write to the migration history log', async () => {
     await tu.context.am.runUpMigrations(undefined, undefined, true)
     expect(await tu.context.am.getMigrationHistory()).toHaveLength(0)
+  })
+})
+
+describe('custom migrationHistoryCollection', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationHistoryCollection: 'custom_migration_history'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('saves migration history in the configured collection', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(3)
+    await expect(tu.context.am.getMigrationHistoryCollection()).resolves.toMatchObject({
+      name: 'custom_migration_history'
+    })
   })
 })

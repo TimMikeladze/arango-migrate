@@ -65,7 +65,7 @@ This migration will create new collections `todo`, `user`, an edge collection `u
 ```js
 
 ```javascript
-import { CollectionType } from 'arangojs/collection'
+import { CollectionType } from 'arangojs'
 
 const migration = {
   description: 'Simple migration',

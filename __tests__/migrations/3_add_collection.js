@@ -1,4 +1,4 @@
-import { CollectionType } from 'arangojs/collection'
+import { CollectionType } from 'arangojs'
 
 const migration = {
   async collections () {

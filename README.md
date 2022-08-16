@@ -62,7 +62,6 @@ This will create an empty migration file in the `migrations` directory.
 
 This migration will create new collections `todo`, `user`, an edge collection `user_todo` and then insert documents in them. Additional lifecycle functions can be added to the migration file, see the full list of options below. If a collection does not exist it will be created by default (set `autoCreateNewCollections` option to `false` to disable this behavior).
 
-```js
 
 ```javascript
 import { CollectionType } from 'arangojs'

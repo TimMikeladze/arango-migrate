@@ -60,21 +60,46 @@ This will create an empty migration file in the `migrations` directory.
 
 ### Simple migration example
 
-This migration will create a new collection called `todo` and insert a single document into it. Additional lifecycle functions can be added to the migration file, see the full list of options below.
+This migration will create new collections `todo`, `user`, an edge collection `user_todo` and then insert documents in them. Additional lifecycle functions can be added to the migration file, see the full list of options below. If a collection does not exist it will be created by default (set `autoCreateNewCollections` option to `false` to disable this behavior).
+
+```js
 
 ```javascript
+import { CollectionType } from 'arangojs/collection'
+
 const migration = {
-    async collections () {
-        return ['todo'] // all collections used in this migration must be defined here.
-    },
-    async up (db, step) {
-        // Using the `step` function, add a new document to the collection as part of this migration's transaction.
-        await step(async () => await db.collection('todo').save({
-            _key: '1',
-            name: 'Buy milk'
-        }))
-    }
+  description: 'Simple migration',
+  async collections () {
+    // All collections used in this migration must be defined here. A string or an options object can be used.
+    return [
+      'todo',
+      'user',
+      {
+        collectionName: 'user_todo_edge',
+        options: {
+          type: CollectionType.EDGE_COLLECTION
+        }
+      }]
+  },
+  async up (db, step) {
+    // Using the `step` function, add a new document to the collection as part of this migration's transaction.
+    await step(async () => await db.collection('todo').save({
+      _key: '1',
+      name: 'Buy milk'
+    }))
+
+    await step(async () => await db.collection('user').save({
+      _key: '1',
+      name: 'John Doe'
+    }))
+
+    await step(async () => await db.collection('user_todo_edge').save({
+      _from: 'user/1',
+      _to: 'todo/1'
+    }))
+  }
 }
+
 export default migration
 ```
 

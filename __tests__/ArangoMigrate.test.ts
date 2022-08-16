@@ -4,6 +4,7 @@ import * as fs from 'fs'
 import { ArangoMigrate, Migration } from '../src/ArangoMigrate'
 import { Database } from 'arangojs/database'
 import { jest } from '@jest/globals'
+import { aql } from 'arangojs'
 
 describe('loadMigrationPaths', () => {
   let tu: TestUtil
@@ -226,6 +227,18 @@ describe('runUpMigrations - all', () => {
     await tu.context.am.runUpMigrations()
     expect(await tu.context.am.getMigrationHistory()).toHaveLength(3)
     expect((await tu.context.am.getMigrationHistory())[0].description).toEqual('The first migration')
+
+    expect(await tu.context.db.collection('todo').exists()).toEqual(true)
+    expect(await tu.context.db.collection('user').exists()).toEqual(true)
+    expect(await tu.context.db.collection('user_todo_edge').exists()).toEqual(true)
+
+    const edge = await (await tu.context.db.query(aql`
+    FOR x IN user_todo_edge
+    RETURN x
+    `)).next()
+
+    expect(edge._from).toEqual('user/1')
+    expect(edge._to).toEqual('todo/1')
   })
 })
 
@@ -536,5 +549,37 @@ describe('custom migrationHistoryCollection', () => {
     await expect(tu.context.am.getMigrationHistoryCollection()).resolves.toMatchObject({
       name: 'custom_migration_history'
     })
+  })
+})
+
+describe('readme migration', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations_readme'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('runs sample migration in the readme', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(1)
+    expect((await tu.context.am.getMigrationHistory())[0].description).toEqual('Simple migration')
+
+    expect(await tu.context.db.collection('todo').exists()).toEqual(true)
+    expect(await tu.context.db.collection('user').exists()).toEqual(true)
+    expect(await tu.context.db.collection('user_todo_edge').exists()).toEqual(true)
+
+    const edge = await (await tu.context.db.query(aql`
+    FOR x IN user_todo_edge
+    RETURN x
+    `)).next()
+
+    expect(edge._from).toEqual('user/1')
+    expect(edge._to).toEqual('todo/1')
   })
 })

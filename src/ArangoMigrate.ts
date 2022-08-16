@@ -16,7 +16,7 @@ export interface CollectionOptions {
   }
 }
 
-export type Collections = string[] | CollectionOptions[]
+export type Collections = Array<string | CollectionOptions>
 
 export type StepFunction = (callback) => Promise<any>
 

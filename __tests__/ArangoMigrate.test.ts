@@ -583,3 +583,38 @@ describe('readme migration', () => {
     expect(edge._to).toEqual('todo/1')
   })
 })
+
+describe('applies more than 10 migrations in the correct oder', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations_more_than_ten'
+    })
+    await tu.context.am.initialize()
+  })
+  afterAll(async () => {
+    await tu.destroy()
+  })
+  it('gets migration versions from paths in ascending order', async () => {
+    const getVersionsFromMigrationPaths = tu.context.am.getVersionsFromMigrationPaths()
+    expect(getVersionsFromMigrationPaths).toEqual([
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ])
+  })
+  it('runs migrations', async () => {
+    await tu.context.am.runUpMigrations()
+    expect(await tu.context.am.getMigrationHistory()).toHaveLength(11)
+  })
+})

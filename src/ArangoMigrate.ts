@@ -496,7 +496,7 @@ export class ArangoMigrate {
   public getVersionsFromMigrationPaths (): number[] {
     return this.migrationPaths.map(migrationPath => {
       return Number(path.basename(migrationPath).split('_')[0])
-    })
+    }).sort((a, b) => a - b)
   }
 
   public validateMigrationFolderNotEmpty () {

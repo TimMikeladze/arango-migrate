@@ -45,7 +45,7 @@ export default {
               username: process.env.ARANGO_USERNAME,
               password: process.env.ARANGO_PASSWORD || ''
         }
-    }, 
+    },
     autoCreateNewCollections: true, // defaults to true if not specified
     migrationHistoryCollection: 'migration_history', // defaults to 'migration_history' if not specified
     migrationsPath: './migrations'
@@ -195,3 +195,13 @@ export interface Migration {
   afterDown?: (db: Database, data?: any) => Promise<any>
 }
 ```
+
+## Contributing
+
+To get started with development, clone the repository and install dependencies with your package manager of choice. This project uses `yarn` by default.
+
+Then copy the `.env.example` file to `.env`. The default values should work for most cases.
+
+Now start the ArangoDB docker container by running `docker-compose up -d`.
+
+Once the container is running make sure everything is working by running `yarn test` and `yarn build`. If both commands succeed you are ready to start contributing to this project.

@@ -87,7 +87,7 @@
   },
   "dependencies": {
     "arangojs": "7.8.0",
-    "commander": "9.4.1",
+    "commander": "10.0.1",
     "glob": "8.0.3",
     "slugify": "1.6.5"
   }

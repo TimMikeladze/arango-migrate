@@ -12,7 +12,7 @@ type Collection = DocumentCollection<any> & EdgeCollection<any>
 export interface CollectionOptions {
   collectionName: string
   options?: CreateCollectionOptions & {
-    type?: CollectionType.DOCUMENT_COLLECTION;
+    type?: CollectionType
   }
 }
 
@@ -282,7 +282,12 @@ export class ArangoMigrate {
       let collection
       try {
         if (this.options.autoCreateNewCollections !== false) {
-          collection = await this.db.createCollection(data.collectionName, data.options)
+          /**
+           * NOTE: arangojs *.d.ts invites user to pass "literal" options object
+           * to infer typeof collection. Thus there is no another way to support
+           * collections() API but using this ugly "as any" cast
+           */
+          collection = await this.db.createCollection(data.collectionName, data.options as any)
           createdCollectionCount++
           newCollections.add(collection)
         }

@@ -1,4 +1,4 @@
-import { CollectionType } from 'arangojs'
+import { CollectionType } from 'arangojs/collection'
 
 const migration = {
   description: 'Simple migration',

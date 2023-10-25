@@ -83,12 +83,15 @@
     "microbundle": "0.15.1",
     "release-it": "15.6.0",
     "ts-jest": "29.0.3",
-    "typescript": "4.8.4"
+    "typescript": "4.8.4",
+    "arangojs": "^8.6.0"
   },
   "dependencies": {
-    "arangojs": "7.8.0",
-    "commander": "9.4.1",
-    "glob": "8.0.3",
-    "slugify": "1.6.5"
+    "commander": "^9.4.1",
+    "glob": "^8.0.3",
+    "slugify": "^1.6.5"
+  },
+  "peerDependencies": {
+    "arangojs": ">=7.8.0"
   }
 }

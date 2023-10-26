@@ -1,7 +1,7 @@
 import { createTestUtil, defaultConfig, TestUtil } from './testUtil'
 import * as path from 'path'
 import * as fs from 'fs'
-import { ArangoMigrate, Migration } from '../src/ArangoMigrate'
+import { ArangoMigrate, Migration, StepFunction } from '../src/ArangoMigrate'
 import { Database } from 'arangojs/database'
 import { jest } from '@jest/globals'
 import { aql } from 'arangojs'
@@ -360,7 +360,7 @@ describe('runUpMigrations/runDownMigrations - runs all lifecycle functions', () 
         return ['todo']
       },
       beforeUp: jest.fn(async () => 1),
-      up: jest.fn(async (db, step, data) => {
+      up: jest.fn(async (db: Database, step: StepFunction, data: any) => {
         await step(() => db.collection('todo').save({
           _key: '1',
           title: 'Buy milk',
@@ -370,7 +370,7 @@ describe('runUpMigrations/runDownMigrations - runs all lifecycle functions', () 
       }),
       afterUp: jest.fn() as any,
       beforeDown: jest.fn(async () => 1),
-      down: jest.fn(async (db, step, data) => {
+      down: jest.fn(async (db: Database, step: StepFunction, data: any) => {
         await step(() => db.collection('todo').remove({
           _key: '1'
         }))
@@ -415,7 +415,7 @@ describe('runUpMigrations - dry run', () => {
         return ['todo']
       },
       beforeUp: jest.fn(async () => 1),
-      up: jest.fn(async (db, step, data) => {
+      up: jest.fn(async (db: Database, step: StepFunction, data: any) => {
         await step(() => db.collection('todo').save({
           _key: '1',
           title: 'Buy milk',
@@ -430,7 +430,7 @@ describe('runUpMigrations - dry run', () => {
         return ['todo']
       },
       beforeUp: jest.fn(async () => 1),
-      up: jest.fn(async (db, step, data) => {
+      up: jest.fn(async (db: Database, step: StepFunction, data: any) => {
         await step(() => db.collection('todo').save({
           _key: '2',
           title: 'Buy food',

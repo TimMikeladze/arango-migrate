@@ -230,12 +230,12 @@ export class ArangoMigrate {
     return collection
   }
 
-  public async getMigrationHistory (): Promise<MigrationHistory[]> {
+  public async getMigrationHistory (direction: 'ASC' | 'DESC' = 'ASC'): Promise<MigrationHistory[]> {
     const collection = await this.getMigrationHistoryCollection()
 
     return await (await this.db.query(aql`
       FOR x IN ${collection}
-      SORT x.counter ASC
+      SORT x.counter ${direction}
       RETURN x`)).all()
   }
 
@@ -315,21 +315,24 @@ export class ArangoMigrate {
     createdCollections: number
   }> {
     const versions = this.getVersionsFromMigrationPaths()
+
     if (!to) {
       to = versions[versions.length - 1]
     }
-    const latestMigration = await this.getLatestMigration()
 
-    let start = 1
+    const history = await this.getMigrationHistory('DESC')
 
-    if (latestMigration?.version) {
-      start = latestMigration.direction === 'up' ? latestMigration.version + 1 : latestMigration.version
-    }
+    const versionsToRun = versions.filter((version) => {
+      const migration = history.find((migration) => migration.version === version);
+      return (migration?.direction !== 'up') && version <= to
+    })
+
+    console.log(versionsToRun)
 
     let appliedMigrations = 0
     let createdCollections = 0
 
-    for (let i = start; i <= (to || latestMigration?.version); i++) {
+    for (const i of versionsToRun) {
       let migration: Migration
       try {
         migration = await this.getMigrationFromVersion(i)
@@ -517,17 +520,6 @@ export class ArangoMigrate {
       throw new Error('Migration versions must be unique.')
     }
 
-    if (versions.length) {
-      for (let index = 0; index < versions.length; index++) {
-        const current = versions[index]
-        if (versions.length > Number(index)) {
-          const next = versions[index + 1]
-          if (next && current + 1 !== next) {
-            throw new Error('Migrations must be numbered consecutively.')
-          }
-        }
-      }
-    }
   }
 
   public async validateMigrationVersion (version: number) {
@@ -550,7 +542,7 @@ export class ArangoMigrate {
 
   public writeNewMigration (name: string, typescript: boolean): string {
     name = slugify(name, '_')
-    const version = this.migrationPaths.length + 1
+    const version = Date.now()
 
     if (!fs.existsSync(path.resolve(this.migrationsPath))) {
       fs.mkdirSync(path.resolve(this.migrationsPath))
@@ -564,11 +556,16 @@ export class ArangoMigrate {
   }
 
   public async hasNewMigrations (): Promise<boolean> {
-    const latestMigration = await this.getLatestMigration()
-    if (!latestMigration) {
+    const history = await this.getMigrationHistory('DESC')
+    if (!history.length) {
       return true
     }
+
     const versions = this.getVersionsFromMigrationPaths()
-    return latestMigration && versions[versions.length - 1] !== latestMigration.version
+
+    return versions.filter((version) => {
+      const migration = history.find((migration) => migration.version === version);
+      return (migration?.direction !== 'up')
+    }).length !== 0
   }
 }

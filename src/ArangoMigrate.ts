@@ -327,8 +327,6 @@ export class ArangoMigrate {
       return (migration?.direction !== 'up') && version <= to
     })
 
-    console.log(versionsToRun)
-
     let appliedMigrations = 0
     let createdCollections = 0
 

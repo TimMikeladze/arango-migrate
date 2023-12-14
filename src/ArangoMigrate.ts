@@ -323,7 +323,7 @@ export class ArangoMigrate {
     const history = await this.getMigrationHistory('DESC')
 
     const versionsToRun = versions.filter((version) => {
-      const migration = history.find((migration) => migration.version === version);
+      const migration = history.find((migration) => migration.version === version)
       return (migration?.direction !== 'up') && version <= to
     })
 
@@ -517,7 +517,6 @@ export class ArangoMigrate {
     if (!versions || versions.length !== new Set(versions).size) {
       throw new Error('Migration versions must be unique.')
     }
-
   }
 
   public async validateMigrationVersion (version: number) {
@@ -562,7 +561,7 @@ export class ArangoMigrate {
     const versions = this.getVersionsFromMigrationPaths()
 
     return versions.filter((version) => {
-      const migration = history.find((migration) => migration.version === version);
+      const migration = history.find((migration) => migration.version === version)
       return (migration?.direction !== 'up')
     }).length !== 0
   }

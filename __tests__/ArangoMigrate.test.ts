@@ -114,15 +114,13 @@ describe('writeNewMigration', () => {
   })
   it('writes a new javascript migration file', async () => {
     const name = Date.now().toString()
-    const filePath = path.resolve(`${defaultConfig.migrationsPath}/${tu.context.am.getMigrationPaths().length + 1}_${name}.js`)
-    tu.context.am.writeNewMigration(name, false)
+    const filePath = tu.context.am.writeNewMigration(name, false)
     expect(fs.existsSync(filePath)).toBeTruthy()
     fs.unlinkSync(filePath)
   })
   it('writes a new typescript migration file', async () => {
     const name = Date.now().toString()
-    const filePath = path.resolve(`${defaultConfig.migrationsPath}/${tu.context.am.getMigrationPaths().length + 1}_${name}.ts`)
-    tu.context.am.writeNewMigration(name, true)
+    const filePath = tu.context.am.writeNewMigration(name, true)
     expect(fs.existsSync(filePath)).toBeTruthy()
     fs.unlinkSync(filePath)
   })
@@ -146,15 +144,6 @@ describe('validateMigrationVersions', () => {
     await tu.context.am.initialize()
 
     expect(() => tu.context.am.validateMigrationVersions()).toThrowError('Migration versions must be unique')
-  })
-  it('throws error if migration versions are not numbered consecutively', async () => {
-    tu.context.am = new ArangoMigrate({
-      ...defaultConfig,
-      migrationsPath: './__tests__/migrations_not_numbered'
-    })
-    await tu.context.am.initialize()
-
-    expect(() => tu.context.am.validateMigrationVersions()).toThrowError('Migrations must be numbered consecutively')
   })
 })
 

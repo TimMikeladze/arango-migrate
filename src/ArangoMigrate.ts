@@ -6,6 +6,7 @@ import { CollectionType, CreateCollectionOptions, DocumentCollection, EdgeCollec
 import fs from 'fs'
 import slugify from 'slugify'
 import { TransactionOptions } from 'arangojs/database'
+import { pathToFileURL } from 'url'
 
 type Collection = DocumentCollection<any> & EdgeCollection<any>
 
@@ -166,7 +167,7 @@ export class ArangoMigrate {
       throw new Error(`Config file ${p} not found.`)
     }
 
-    const importedConfig = await import(p)
+    const importedConfig = await import(pathToFileURL(p).href)
 
     const config: ArangoMigrateOptions = importedConfig.default
 
@@ -216,7 +217,7 @@ export class ArangoMigrate {
       return version === Number(basename.split('_')[0]) && fs.existsSync(path.resolve(x))
     })
 
-    const importedMigration = await import(migrationPath)
+    const importedMigration = await import(pathToFileURL(migrationPath).href)
     return importedMigration.default
   }
 

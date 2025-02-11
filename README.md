@@ -200,7 +200,7 @@ export interface Migration {
 
 To get started with development, clone the repository and install dependencies with your package manager of choice. This project uses `yarn` by default.
 
-Then copy the `.env.example` file to `.env`. The default values should work for most cases.
+Then copy the `.env.template` file to `.env`. The default values should work for most cases.
 
 Now start the ArangoDB docker container by running `docker-compose up -d`.
 

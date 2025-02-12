@@ -428,6 +428,11 @@ export class ArangoMigrate {
 
     let version = latestMigration.version
     while (version >= to) {
+      if (!this.migrationExists(version)) {
+        version--
+        continue
+      }
+
       let migration: Migration
       try {
         migration = await this.getMigrationFromVersion(version)

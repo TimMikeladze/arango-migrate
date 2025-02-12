@@ -203,6 +203,10 @@ export class ArangoMigrate {
     }
   }
 
+  public migrationExists (version: number): boolean {
+    return this.getMigrationPathFromVersion(version) !== undefined
+  }
+
   public getMigrationPathFromVersion (version: number): string {
     return this.migrationPaths.find(x => {
       const basename = path.basename(x)

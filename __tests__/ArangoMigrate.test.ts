@@ -47,6 +47,29 @@ describe('initialize', () => {
   })
 })
 
+describe('migrationExists', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil()
+    await tu.context.am.initialize()
+  })
+
+  afterAll(async () => {
+    await tu.destroy()
+  })
+
+  it('returns true if version exists', async () => {
+    expect(tu.context.am.migrationExists(1)).toBeTruthy();
+  })
+
+  it('returns false if version does not exist ', async () => {
+    tu.context.am = new ArangoMigrate(defaultConfig)
+    await tu.context.am.initialize()
+    expect(tu.context.am.migrationExists(99)).toBeFalsy();
+  })
+})
+
 describe('getMigrationPathFromVersion', () => {
   let tu: TestUtil
 

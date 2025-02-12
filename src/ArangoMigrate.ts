@@ -412,7 +412,7 @@ export class ArangoMigrate {
     return { appliedMigrations, createdCollections }
   }
 
-  public async runDownMigrations (to?: number, dryRun?: boolean, noHistory?: boolean): Promise<{ appliedMigrations: number, createdCollections: number; }> {
+  public async runDownMigrations (to?: number, dryRun?: boolean, noHistory?: boolean, disallowMissingVersions?: boolean): Promise<{ appliedMigrations: number, createdCollections: number; }> {
     const latestMigration = await this.getLatestMigration()
 
     if (!latestMigration) {
@@ -428,7 +428,7 @@ export class ArangoMigrate {
 
     let version = latestMigration.version
     while (version >= to) {
-      if (!this.migrationExists(version)) {
+      if (!this.migrationExists(version) && !disallowMissingVersions) {
         version--
         continue
       }

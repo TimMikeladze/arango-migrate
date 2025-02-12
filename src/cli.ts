@@ -6,7 +6,8 @@ import { ArangoMigrate, DEFAULT_CONFIG_PATH } from './ArangoMigrate'
 
 interface CommanderOptions {
     config?: string,
-    down?: boolean
+    disallowMissingVersions?: boolean,
+    down?: boolean,
     dryRun?: boolean,
     init?: string,
     list?: boolean,
@@ -29,6 +30,7 @@ interface CommanderOptions {
     .option('-l --list', 'list all applied migrations')
     .option('-dr --dry-run', 'dry run. Executes migration lifecycle functions but never commits the transaction to the database or writes to the migration history log')
     .option('-nh --no-history', 'Skips writing to the migration history log. Use this with caution since the applied migrations will not be saved in the migration history log, opening the possibility of applying the same migration multiple times and potentially dirtying your data')
+    .option('--disallow-missing-versions', 'raise an exception if there are missing versions when running down migrations')
 
   program.parse(process.argv)
 
@@ -79,7 +81,7 @@ interface CommanderOptions {
 
       const to = Number(options.to)
 
-      const { createdCollections, appliedMigrations } = await am.runDownMigrations(to, options.dryRun, options.noHistory)
+      const { createdCollections, appliedMigrations } = await am.runDownMigrations(to, options.dryRun, options.noHistory, options.disallowMissingVersions)
       console.log(`${createdCollections} collections created.`)
       if (options.dryRun) {
         console.log(`${appliedMigrations} \`down\` migrations dry ran.`)

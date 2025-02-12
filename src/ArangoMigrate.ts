@@ -426,7 +426,8 @@ export class ArangoMigrate {
     let appliedMigrations = 0
     let createdCollections = 0
 
-    for (let version = latestMigration.version; version >= to; version--) {
+    let version = latestMigration.version
+    while (version >= to) {
       let migration: Migration
       try {
         migration = await this.getMigrationFromVersion(version)
@@ -500,6 +501,7 @@ export class ArangoMigrate {
         throw error
       }
       appliedMigrations += 1
+      version--
     }
     return { appliedMigrations, createdCollections }
   }

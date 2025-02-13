@@ -69,7 +69,7 @@
     "@types/jest": "29.2.0",
     "@typescript-eslint/eslint-plugin": "5.41.0",
     "@typescript-eslint/parser": "5.41.0",
-    "arangojs": "^8.6.0",
+    "arangojs": "^10.0.0",
     "dotenv": "16.0.3",
     "eslint": "8.26.0",
     "eslint-config-standard": "17.0.0",

@@ -47,6 +47,29 @@ describe('initialize', () => {
   })
 })
 
+describe('migrationExists', () => {
+  let tu: TestUtil
+
+  beforeAll(async () => {
+    tu = await createTestUtil()
+    await tu.context.am.initialize()
+  })
+
+  afterAll(async () => {
+    await tu.destroy()
+  })
+
+  it('returns true if version exists', async () => {
+    expect(tu.context.am.migrationExists(1)).toBeTruthy()
+  })
+
+  it('returns false if version does not exist ', async () => {
+    tu.context.am = new ArangoMigrate(defaultConfig)
+    await tu.context.am.initialize()
+    expect(tu.context.am.migrationExists(99)).toBeFalsy()
+  })
+})
+
 describe('getMigrationPathFromVersion', () => {
   let tu: TestUtil
 
@@ -252,6 +275,106 @@ describe('runDownMigrations - all', () => {
   it('runs all up migrations again', async () => {
     await tu.context.am.runUpMigrations()
     expect(await tu.context.am.getMigrationHistory()).toHaveLength(9)
+  })
+})
+
+describe('runDownMigrations - gap in version numbers', () => {
+  let tu: TestUtil
+
+  beforeEach(async () => {
+    tu = await createTestUtil({
+      ...defaultConfig,
+      migrationsPath: './__tests__/migrations_with_gap_in_versions'
+    })
+    await tu.context.am.initialize()
+  })
+
+  afterEach(async () => {
+    await tu.destroy()
+  })
+
+  describe('when we run the up migrations', () => {
+    beforeEach(async () => {
+      await tu.context.am.runUpMigrations()
+    })
+
+    it('creates the expected migration history', async () => {
+      const history = await tu.context.am.getMigrationHistory()
+      expect(history).toEqual([
+        expect.objectContaining({
+          version: 1,
+          direction: 'up'
+        }),
+        expect.objectContaining({
+          version: 3,
+          direction: 'up'
+        })
+      ])
+    })
+
+    describe('and then we run the down migrations', () => {
+      beforeEach(async () => {
+        await tu.context.am.runDownMigrations()
+      })
+
+      it('adds the expected migration history', async () => {
+        const history = await tu.context.am.getMigrationHistory()
+        expect(history).toEqual([
+          expect.objectContaining({
+            version: 1,
+            direction: 'up'
+          }),
+          expect.objectContaining({
+            version: 3,
+            direction: 'up'
+          }),
+          expect.objectContaining({
+            version: 3,
+            direction: 'down'
+          }),
+          expect.objectContaining({
+            version: 1,
+            direction: 'down'
+          })
+        ])
+      })
+
+      describe('and then we run the up migrations one more time', () => {
+        beforeEach(async () => {
+          await tu.context.am.runUpMigrations()
+        })
+
+        it('adds the expected migration history', async () => {
+          const history = await tu.context.am.getMigrationHistory()
+          expect(history).toEqual([
+            expect.objectContaining({
+              version: 1,
+              direction: 'up'
+            }),
+            expect.objectContaining({
+              version: 3,
+              direction: 'up'
+            }),
+            expect.objectContaining({
+              version: 3,
+              direction: 'down'
+            }),
+            expect.objectContaining({
+              version: 1,
+              direction: 'down'
+            }),
+            expect.objectContaining({
+              version: 1,
+              direction: 'up'
+            }),
+            expect.objectContaining({
+              version: 3,
+              direction: 'up'
+            })
+          ])
+        })
+      })
+    })
   })
 })
 

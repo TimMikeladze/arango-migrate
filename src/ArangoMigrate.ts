@@ -203,6 +203,10 @@ export class ArangoMigrate {
     }
   }
 
+  public migrationExists (version: number): boolean {
+    return this.getMigrationPathFromVersion(version) !== undefined
+  }
+
   public getMigrationPathFromVersion (version: number): string {
     return this.migrationPaths.find(x => {
       const basename = path.basename(x)
@@ -408,7 +412,7 @@ export class ArangoMigrate {
     return { appliedMigrations, createdCollections }
   }
 
-  public async runDownMigrations (to?: number, dryRun?: boolean, noHistory?: boolean): Promise<{ appliedMigrations: number, createdCollections: number; }> {
+  public async runDownMigrations (to?: number, dryRun?: boolean, noHistory?: boolean, disallowMissingVersions?: boolean): Promise<{ appliedMigrations: number, createdCollections: number; }> {
     const latestMigration = await this.getLatestMigration()
 
     if (!latestMigration) {
@@ -422,16 +426,22 @@ export class ArangoMigrate {
     let appliedMigrations = 0
     let createdCollections = 0
 
-    for (let i = latestMigration.version; i >= to; i--) {
+    let version = latestMigration.version
+    while (version >= to) {
+      if (!this.migrationExists(version) && !disallowMissingVersions) {
+        version--
+        continue
+      }
+
       let migration: Migration
       try {
-        migration = await this.getMigrationFromVersion(i)
+        migration = await this.getMigrationFromVersion(version)
       } catch (err) {
         console.log(err)
         return
       }
 
-      const name = path.basename(this.getMigrationPathFromVersion(i))
+      const name = path.basename(this.getMigrationPathFromVersion(version))
 
       const collectionNames = migration.collections ? await migration.collections() : []
 
@@ -456,7 +466,7 @@ export class ArangoMigrate {
           downResult = await migration.down(this.db, (callback: () => Promise<any>) => transaction.step(callback), beforeDownData)
         } catch (err) {
           console.log(err)
-          error = new Error(`Running up failed for migration ${i}.`)
+          error = new Error(`Running up failed for migration ${version}.`)
         }
       }
 
@@ -488,7 +498,7 @@ export class ArangoMigrate {
 
       if (!error) {
         if (!dryRun && noHistory !== true) {
-          await this.writeMigrationHistory('down', name, migration.description, i)
+          await this.writeMigrationHistory('down', name, migration.description, version)
         }
       }
 
@@ -496,6 +506,7 @@ export class ArangoMigrate {
         throw error
       }
       appliedMigrations += 1
+      version--
     }
     return { appliedMigrations, createdCollections }
   }

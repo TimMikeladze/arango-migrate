@@ -1,6 +1,6 @@
 {
   "name": "arango-migrate",
-  "version": "1.7.1",
+  "version": "2.0.0",
   "description": "Migration tools for ArangoDB",
   "author": "Tim Mikeladze <tim.mikeladze@gmail.com>",
   "keywords": [

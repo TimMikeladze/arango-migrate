@@ -71,7 +71,7 @@
     "@typescript-eslint/parser": "5.41.0",
     "arangojs": "^8.6.0",
     "dotenv": "16.0.3",
-    "eslint": "8.26.0",
+    "eslint": "9.21.0",
     "eslint-config-standard": "17.0.0",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-n": "16.4.0",
